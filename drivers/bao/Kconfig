@@ -1,0 +1,5 @@
+config BAO_SHMEM
+	tristate "Bao shared memory support"
+
+	help
+	  This implements an interface to communicate with bao hosted guests.

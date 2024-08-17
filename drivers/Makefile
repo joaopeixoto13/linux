@@ -160,6 +160,7 @@ obj-$(CONFIG_SOUNDWIRE)		+= soundwire/
 obj-$(CONFIG_VIRT_DRIVERS)	+= virt/
 obj-$(subst m,y,$(CONFIG_HYPERV))	+= hv/
 
+obj-$(CONFIG_BAO_SHMEM) += bao/
 obj-$(CONFIG_PM_DEVFREQ)	+= devfreq/
 obj-$(CONFIG_EXTCON)		+= extcon/
 obj-$(CONFIG_MEMORY)		+= memory/

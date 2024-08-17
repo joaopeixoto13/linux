@@ -1,0 +1,48 @@
+# SPDX-License-Identifier: GPL-2.0
+config BAO_IO_DISPATCHER
+	tristate "Bao Hypervisor I/O Dispatcher"
+	depends on BAO_SHMEM
+	help
+	  The Bao I/O Dispatcher system is a kernel module that can be loaded
+	  into the Linux kernel of the backend VMs. It is responsible for
+	  establishing the connection between the Remote I/O system and the
+	  Frontend Device Model, offering a unified API to support various
+	  VirtIO backends.
+
+	  To compile as a module, choose M, the module will be called
+	  bao_io_dispatcher. If unsure, say N.
+
+choice
+    prompt "Bao Hypervisor I/O Dispatcher Mode"
+    default BAO_IO_DISPATCHER_INTERRUPT_MODE
+	depends on BAO_IO_DISPATCHER
+    help
+      Choose between interrupt mode and pooling mode.
+
+config BAO_IO_DISPATCHER_INTERRUPT_MODE
+	bool "Interrupt Mode"
+	help
+	  Say Y here to enable the I/O Dispatcher System Interrupt Mode.
+
+	  If you say N, the I/O Dispatcher System will dispatch the I/O requests
+	  on a periodic form, resulting in a potential degradation of
+	  performance.
+
+config BAO_IO_DISPATCHER_POOLING_MODE
+	bool "Pooling Mode"
+	help
+	  Say Y here to enable the I/O Dispatcher System Pooling Mode.
+
+	  If you say N, the I/O Dispatcher System will dispatch the I/O requests
+	  though interrupts, resulting in a potential improvement of
+	  performance.
+
+endchoice
+
+config BAO_IO_DISPATCHER_POOLING_INTERVAL
+	int "Interval in nanoseconds"
+	default 1000000
+	depends on BAO_IO_DISPATCHER
+	depends on BAO_IO_DISPATCHER_POOLING_MODE
+	help
+      Set the interval in nanoseconds for the pooling mode. Adjust this value according to your needs.
