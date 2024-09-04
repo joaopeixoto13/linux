@@ -51,11 +51,13 @@ long bao_dm_ioctl(struct file *filp, unsigned int cmd,
 			return -EINVAL;
 		}
 		rc = bao_io_client_attach(dm->control_client);
-		rc = bao_io_client_request(dm->control_client, req);
-		if (copy_to_user((void __user *)ioctl_param, req,
-				 sizeof(struct bao_virtio_request))) {
-			pr_err("%s: copy_to_user failed\n", __FUNCTION__);
-			return -EFAULT;
+		if (rc == 0) {
+			rc = bao_io_client_request(dm->control_client, req);
+			if (copy_to_user((void __user *)ioctl_param, req,
+					 sizeof(struct bao_virtio_request))) {
+				pr_err("%s: copy_to_user failed\n", __FUNCTION__);
+				return -EFAULT;
+			}
 		}
 		kfree(req);
 		break;
@@ -121,7 +123,7 @@ static int bao_io_dispatcher_dev_release(struct inode *inode, struct file *filp)
  * @ioctl_param: The ioctl parameter
  */
 static long bao_io_dispatcher_dev_ioctl(struct file *filp, unsigned int cmd,
-			  unsigned long ioctl_param)
+					unsigned long ioctl_param)
 {
 	int rc = -EINVAL;
 	unsigned int id;
