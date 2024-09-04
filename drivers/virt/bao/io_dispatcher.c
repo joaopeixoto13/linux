@@ -169,8 +169,12 @@ int bao_io_client_attach(struct bao_io_client *client)
 					 has_pending_requests(client) ||
 						 is_destroying(client) ||
 							 kthread_should_stop());
-		if (is_destroying(client) || kthread_should_stop())
+		if (is_destroying(client) || kthread_should_stop()) {
+			if (kthread_should_stop()) {
+				bao_io_client_destroy(client);
+			}
 			return -EPERM;
+		}
 	}
 
 	return 0;
