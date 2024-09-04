@@ -304,8 +304,6 @@ void bao_ioeventfd_client_destroy(struct bao_io_dm *dm)
 {
 	struct ioeventfd *p, *next;
 
-	// destroy the Ioeventfd client
-	bao_io_client_destroy(dm->ioeventfd_client);
 	mutex_lock(&dm->ioeventfds_lock);
 	// shutdown all the ioeventfds
 	list_for_each_entry_safe(p, next, &dm->ioeventfds, list)

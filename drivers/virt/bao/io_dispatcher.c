@@ -106,8 +106,10 @@ void bao_io_client_destroy(struct bao_io_client *client)
 	// stop the client
 	if (client->is_control)
 		wake_up_interruptible(&client->wq);
-	else
+	else {
+		bao_ioeventfd_client_destroy(dm);
 		kthread_stop(client->thread);
+	}
 
 	// remove the I/O ranges
 	write_lock_bh(&client->range_lock);
