@@ -457,7 +457,7 @@ void bao_io_client_range_del(struct bao_io_client *client, u64 start, u64 end)
  * @req: The I/O request
  * @return bool
 */
-static bool in_range(struct bao_io_range *range, struct bao_io_request *req)
+static bool bao_io_req_in_range(struct bao_io_range *range, struct bao_io_request *req)
 {
 	bool ret = false;
 
@@ -490,7 +490,7 @@ static struct bao_io_client *find_io_client(struct bao_io_dm *dm,
 		// for all the ranges
 		list_for_each_entry(range, &client->range_list, list) {
 			// check if the I/O request is in the range of a given client
-			if (in_range(range, req)) {
+			if (bao_io_req_in_range(range, req)) {
 				found = client;
 				break;
 			}
