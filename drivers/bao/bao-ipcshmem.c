@@ -275,10 +275,10 @@ err_unmap:
     return ret;
 }
 
-static int bao_ipcshmem_unregister(struct platform_device *pdev)
+static void bao_ipcshmem_unregister(struct platform_device *pdev)
 {
     /* TODO */
-    return 0;
+    return;
 }
 
 static const struct of_device_id of_bao_ipcshmem_match[] = {
