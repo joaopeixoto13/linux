@@ -20,7 +20,6 @@
 
 #include <linux/bao.h>
 #include "bao_drv.h"
-#include "hypercall.h"
 
 /**
  * DM ioctls handler
