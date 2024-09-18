@@ -260,7 +260,7 @@ static int bao_ioeventfd_handler(struct bao_io_client *client,
 			    req->virtio_request.access_width);
 	// if matched, signal the eventfd
 	if (p)
-		eventfd_signal(p->eventfd, 1);
+		eventfd_signal(p->eventfd);
 	mutex_unlock(&client->dm->ioeventfds_lock);
 
 	return 0;
