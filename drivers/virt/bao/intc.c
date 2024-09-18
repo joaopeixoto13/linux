@@ -95,13 +95,13 @@ static int bao_io_dispatcher_intc_probe(struct platform_device *pdev)
  * bao_io_dispatcher_intc_remove - Remove the interrupt handler
  * @pdev: Platform device pointer
  */
-static int bao_io_dispatcher_intc_remove(struct platform_device *pdev)
+static void bao_io_dispatcher_intc_remove(struct platform_device *pdev)
 {
 	for (int i = 0; i < irq_number; i++) {
 		// free the interrupt
 		free_irq(irq_numbers[i], pdev);
 	}
-	return 0;
+	return;
 }
 
 static const struct of_device_id bao_io_dispatcher_intc_dt_ids[] = {
