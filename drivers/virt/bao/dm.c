@@ -39,12 +39,6 @@ static int bao_dm_release(struct inode *inode, struct file *filp)
 	return 0;
 }
 
-static const struct vm_operations_struct bao_mmap_vm_mem_ops = {
-#ifdef CONFIG_HAVE_IOREMAP_PROT
-	.access = generic_access_phys
-#endif
-};
-
 /**
  * ioctl handler for DM mmap
  * @filp: The file pointer of the DM
@@ -56,39 +50,15 @@ static const struct vm_operations_struct bao_mmap_vm_mem_ops = {
  */
 static int bao_dm_mmap(struct file *filp, struct vm_area_struct *vma)
 {
-	/*
-	* There are two ways of building the page tables:
-	* 1) Doing it all at once with a function called 'remap_pfn_range'
-	* 2) Doing it a page at a time via the 'nopage' DMA method.
-	* For this case, we will use the first method.
-	*/
+	struct bao_io_dm *dm = filp->private_data;
 
-	// calculate the size
-	size_t size = vma->vm_end - vma->vm_start;
+    unsigned long vsize = vma->vm_end - vma->vm_start;
 
-	// calculate the offset
-	phys_addr_t offset = (phys_addr_t)vma->vm_pgoff << PAGE_SHIFT;
+    if (remap_pfn_range(vma, vma->vm_start, dm->info.shmem_addr >> PAGE_SHIFT, vsize, vma->vm_page_prot)) {
+        return -EFAULT;
+    }
 
-	// verify if the vma exists
-	if (!vma) {
-		return -EINVAL;
-	}
-
-	// verify if the offset is valid
-	if (offset >> PAGE_SHIFT != vma->vm_pgoff) {
-		return -EINVAL;
-	}
-
-	// update the vma operations
-	vma->vm_ops = &bao_mmap_vm_mem_ops;
-
-	// remap-pfn-range will mark the range DM_IO
-	if (remap_pfn_range(vma, vma->vm_start, vma->vm_pgoff, size,
-			    vma->vm_page_prot)) {
-		return -EAGAIN;
-	}
-
-	return 0;
+    return 0;
 }
 
 static struct file_operations bao_dm_fops = {
@@ -100,54 +70,34 @@ static struct file_operations bao_dm_fops = {
 	.mmap = bao_dm_mmap,
 };
 
-int bao_dm_create(unsigned int id)
+struct bao_io_dm* bao_dm_create(struct bao_dm_info *info)
 {
-	int rc = 0;
-	struct file *file;
 	struct bao_io_dm *dm;
 	char name[BAO_NAME_MAX_LEN];
 
 	// verify if already exists a DM with the same virtual ID
-	write_lock_bh(&bao_dm_list_lock);
+	read_lock(&bao_dm_list_lock);
 	list_for_each_entry(dm, &bao_dm_list, list) {
-		if (dm->id == id) {
-			write_unlock_bh(&bao_dm_list_lock);
-			return -EEXIST;
+		if (dm->info.id == info->id) {
+			read_unlock(&bao_dm_list_lock);
+			return NULL;
 		}
 	}
-	write_unlock_bh(&bao_dm_list_lock);
+	read_unlock(&bao_dm_list_lock);
 
 	// allocate memory for the DM
 	dm = kzalloc(sizeof(struct bao_io_dm), GFP_KERNEL);
 	if (!dm) {
 		pr_err("%s: kzalloc failed\n", __FUNCTION__);
-		return -ENOMEM;
+		return NULL;
 	}
 
 	// initialize the DM structure
 	INIT_LIST_HEAD(&dm->io_clients);
 	spin_lock_init(&dm->io_clients_lock);
 
-	// set the DM virtual ID
-	dm->id = id;
-
-	// create a new file descriptor for the DM
-	rc = get_unused_fd_flags(O_CLOEXEC);
-	if (rc < 0) {
-		pr_err("%s: get_unused_fd_flags failed\n", __FUNCTION__);
-		goto err_unlock;
-	}
-
-	snprintf(name, sizeof(name), "bao-dm-%d", id);
-	// create a new anonymous inode for the DM abstraction
-	// the `bao_dm_fops` defines the behavior of this "file" and
-	// the `dm` is the private data
-	file = anon_inode_getfile(name, &bao_dm_fops, dm, O_RDWR);
-	if (IS_ERR(file)) {
-		pr_err("%s: anon_inode_getfile failed\n", __FUNCTION__);
-		put_unused_fd(rc);
-		goto err_unlock;
-	}
+	// set the DM fields
+	dm->info = *info;
 
 	// initialize the I/O request client
 	bao_io_dispatcher_init(dm);
@@ -158,7 +108,7 @@ int bao_dm_create(unsigned int id)
 	write_unlock_bh(&bao_dm_list_lock);
 
 	// create the Control client
-	snprintf(name, sizeof(name), "bao-control-client-%u", dm->id);
+	snprintf(name, sizeof(name), "bao-control-client-%u", dm->info.id);
 	dm->control_client = bao_io_client_create(dm, NULL, NULL, true, name);
 
 	// initialize the Ioeventfd client
@@ -167,32 +117,13 @@ int bao_dm_create(unsigned int id)
 	// initialize the Irqfd server
 	bao_irqfd_server_init(dm);
 
-	// associate the file descriptor `rc` with the struct file object `file`
-	// in the file descriptor table of the current process
-	// (expose the file descriptor `rc` to userspace)
-	fd_install(rc, file);
-
 	// return the file descriptor to userspace for the
 	// fronteend DM to request services from the associated backend DM
-	return rc;
-
-err_unlock:
-	kfree(dm);
-	return rc;
+	return dm;
 }
 
-int bao_dm_destroy(unsigned int id)
+void bao_dm_destroy(struct bao_io_dm *dm)
 {
-	struct bao_io_dm *dm;
-
-	// find the DM in the list
-	write_lock_bh(&bao_dm_list_lock);
-	list_for_each_entry(dm, &bao_dm_list, list) {
-		if (dm->id == id)
-			break;
-	}
-	write_unlock_bh(&bao_dm_list_lock);
-
 	// mark as destroying
 	set_bit(BAO_IO_DM_FLAG_DESTROYING, &dm->flags);
 
@@ -200,6 +131,13 @@ int bao_dm_destroy(unsigned int id)
 	write_lock_bh(&bao_dm_list_lock);
 	list_del_init(&dm->list);
 	write_unlock_bh(&bao_dm_list_lock);
+
+	// clear the global fields
+	dm->info.id = 0;
+	dm->info.shmem_addr = 0;
+	dm->info.shmem_size = 0;
+	dm->info.irq = 0;
+	put_unused_fd(dm->info.fd);
 
 	// destroy the Irqfd server
 	bao_irqfd_server_destroy(dm);
@@ -212,6 +150,73 @@ int bao_dm_destroy(unsigned int id)
 
 	// free the DM
 	kfree(dm);
+}
 
-	return 0;
+/**
+ * Create an anonymous inode for the DM abstraction
+ * @note: The anonymous inode is used to expose the DM to userspace
+ * 	  	  and allow the frontend DM to request services from the backend DM
+ * 	      directly through the file descriptor
+ *        This function should be called after the DM is created and invoked
+ * 		  by the frontend DM (userspace process) to create the anonymous inode 
+ * 		  inside the process file descriptor table
+ * @dm: The DM to create the anonymous inode
+ * @return: >=0 on success, <0 on failure
+ */
+static int bao_dm_create_anonymous_inode(struct bao_io_dm *dm)
+{
+	char name[BAO_NAME_MAX_LEN];
+	struct file *file;
+	int rc = 0;
+
+	// create a new file descriptor for the DM
+	rc = get_unused_fd_flags(O_CLOEXEC);
+	if (rc < 0) {
+		pr_err("%s: get_unused_fd_flags failed\n", __FUNCTION__);
+		return rc;
+	}
+
+	// create a name for the DM file descriptor
+	snprintf(name, sizeof(name), "bao-dm-%u", dm->info.id);
+
+	// create a new anonymous inode for the DM abstraction
+	// the `bao_dm_fops` defines the behavior of this "file" and
+	// the `dm` is the private data
+	file = anon_inode_getfile(name, &bao_dm_fops, dm, O_RDWR);
+	if (IS_ERR(file)) {
+		pr_err("%s: anon_inode_getfile failed\n", __FUNCTION__);
+		put_unused_fd(rc);
+		return rc;
+	}
+
+	// associate the file descriptor `rc` with the struct file object `file`
+	// in the file descriptor table of the current process
+	// (expose the file descriptor `rc` to userspace)
+	fd_install(rc, file);
+
+	// update the DM file descriptor
+	dm->info.fd = rc;
+
+	return rc;
+}
+
+bool bao_dm_get_info(struct bao_dm_info *info)
+{
+	struct bao_io_dm *dm;
+	bool rc = false;
+
+	read_lock(&bao_dm_list_lock);
+	list_for_each_entry(dm, &bao_dm_list, list) {
+		if (dm->info.id == info->id) {
+			info->shmem_addr = dm->info.shmem_addr;
+			info->shmem_size = dm->info.shmem_size;
+			info->irq = dm->info.irq;
+			info->fd = bao_dm_create_anonymous_inode(dm);
+			rc = true;
+			break;
+		}
+	}
+	read_unlock(&bao_dm_list_lock);
+
+	return rc;
 }

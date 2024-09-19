@@ -96,7 +96,7 @@ static int bao_irqfd_wakeup(wait_queue_entry_t *wait, unsigned int mode,
 	// check if the event is signaled
 	if (poll_bits & POLLIN)
 		// an event has been signaled, inject a irqfd
-		bao_irqfd_inject(dm->id);
+		bao_irqfd_inject(dm->info.id);
 
 	if (poll_bits & POLLHUP)
 		// do shutdown work in thread to hold wqh->lock
@@ -211,7 +211,7 @@ static int bao_irqfd_assign(struct bao_io_dm *dm, struct bao_irqfd *args)
 
 	// if the event is signaled, signal Bao Hypervisor
 	if (events & EPOLLIN)
-		bao_irqfd_inject(dm->id);
+		bao_irqfd_inject(dm->info.id);
 
 	// release the file descriptor reference
 	fdput(f);
@@ -279,7 +279,7 @@ int bao_irqfd_server_init(struct bao_io_dm *dm)
 	INIT_LIST_HEAD(&dm->irqfds);
 
 	// create a new name for the irqfd server based on type and DM ID
-	snprintf(name, sizeof(name), "bao-irqfd-%u", dm->id);
+	snprintf(name, sizeof(name), "bao-irqfd-%u", dm->info.id);
 
 	// allocate a new workqueue for the irqfd
 	dm->irqfd_server = alloc_workqueue(name, 0, 0);

@@ -25,6 +25,7 @@
 
 #define BAO_NAME_MAX_LEN 32
 #define BAO_IO_REQUEST_MAX 64
+#define BAO_IO_MAX_DMS 16
 
 /**
  * Contains the specific parameters of a Bao VirtIO request
@@ -76,6 +77,22 @@ struct bao_irqfd {
 	__u32 flags;
 };
 
+/**
+ * Contains the specific parameters of a Bao DM
+ * @id: The virtual ID of the DM
+ * @shmem_addr: The base address of the shared memory
+ * @shmem_size: The size of the shared memory
+ * @irq: The IRQ number
+ * @fd: The file descriptor of the DM
+ */
+struct bao_dm_info {
+	__u32 id;
+	__u64 shmem_addr;
+	__u64 shmem_size;
+	__u32 irq;
+	__s32 fd;
+};
+
 /* The ioctl type, listed in Documentation/userspace-api/ioctl/ioctl-number.rst */
 #define BAO_IOCTL_TYPE 0xA6
 
@@ -83,13 +100,12 @@ struct bao_irqfd {
  * Common IOCTL IDs definition for Bao userspace
  * Follows the convention of the Linux kernel, listed in Documentation/driver-api/ioctl.rst
  */
-#define BAO_IOCTL_IO_DM_BACKEND_CREATE _IOW(BAO_IOCTL_TYPE, 0x01, __u32)
-#define BAO_IOCTL_IO_DM_BACKEND_DESTROY _IOW(BAO_IOCTL_TYPE, 0x02, __u32)
+#define BAO_IOCTL_IO_DM_GET_INFO _IOWR(BAO_IOCTL_TYPE, 0x01, struct bao_dm_info)
 #define BAO_IOCTL_IO_CLIENT_ATTACH \
-	_IOWR(BAO_IOCTL_TYPE, 0x03, struct bao_virtio_request)
+	_IOWR(BAO_IOCTL_TYPE, 0x02, struct bao_virtio_request)
 #define BAO_IOCTL_IO_REQUEST_NOTIFY_COMPLETED \
-	_IOW(BAO_IOCTL_TYPE, 0x04, struct bao_virtio_request)
-#define BAO_IOCTL_IOEVENTFD _IOW(BAO_IOCTL_TYPE, 0x05, struct bao_ioeventfd)
-#define BAO_IOCTL_IRQFD _IOW(BAO_IOCTL_TYPE, 0x06, struct bao_irqfd)
+	_IOW(BAO_IOCTL_TYPE, 0x03, struct bao_virtio_request)
+#define BAO_IOCTL_IOEVENTFD _IOW(BAO_IOCTL_TYPE, 0x04, struct bao_ioeventfd)
+#define BAO_IOCTL_IRQFD _IOW(BAO_IOCTL_TYPE, 0x05, struct bao_irqfd)
 
 #endif /* _UAPI_BAO_H */

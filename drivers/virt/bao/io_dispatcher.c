@@ -16,7 +16,6 @@
 #include <linux/eventfd.h>
 #include <linux/workqueue.h>
 #include <linux/delay.h>
-#include <linux/interrupt.h>
 
 #include <linux/bao.h>
 #include "bao_drv.h"
@@ -520,7 +519,7 @@ static int dispatch_io(struct bao_io_dm *dm)
 
 	// update the request
 	// the virtio_id is the Virtual DM id
-	req->virtio_request.virtio_id = dm->id;
+	req->virtio_request.virtio_id = dm->info.id;
 	// clear the addr field
 	req->virtio_request.addr = 0;
 	// BAO_IO_ASK will extract the I/O request from the Bao Hypervisor

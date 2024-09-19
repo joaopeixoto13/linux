@@ -288,7 +288,7 @@ int bao_ioeventfd_client_init(struct bao_io_dm *dm)
 	INIT_LIST_HEAD(&dm->ioeventfds);
 
 	// create a new name for the Ioeventfd client based on type and DM ID
-	snprintf(name, sizeof(name), "bao-ioeventfd-client-%u", dm->id);
+	snprintf(name, sizeof(name), "bao-ioeventfd-client-%u", dm->info.id);
 
 	// create a new I/O client (Ioeventfd client)
 	dm->ioeventfd_client = bao_io_client_create(

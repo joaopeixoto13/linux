@@ -18,6 +18,9 @@
 #include <linux/mutex.h>
 #include <linux/fs.h>
 #include <linux/file.h>
+#include <linux/interrupt.h>
+#include <linux/cdev.h>
+#include <linux/device.h>
 
 #define BAO_IOEVENTFD_FLAG_DATAMATCH (1 << 1)
 #define BAO_IOEVENTFD_FLAG_DEASSIGN (1 << 2)
@@ -81,7 +84,7 @@ struct bao_io_client {
 /**
  * Bao backend device model (DM)
  * @list: Entry within global list of all DMs
- * @id: DM ID (Used to handle the I/O ID, responsible to connect each frontend driver to the backend device)
+ * @info: DM information (id, shmem_addr, shmem_size, irq, fd)
  * @flags: Flags (BAO_IO_DISPATCHER_DM_*)
  * @ioeventfds: List to link all bao_ioeventfd
  * @ioeventfds_lock: Lock to protect ioeventfds list
@@ -95,7 +98,7 @@ struct bao_io_client {
  */
 struct bao_io_dm {
 	struct list_head list;
-	__u32 id;
+	struct bao_dm_info info;
 	unsigned long flags;
 	struct list_head ioeventfds;
 	struct mutex ioeventfds_lock;
@@ -124,25 +127,38 @@ struct bao_io_range {
 extern struct list_head bao_dm_list;
 extern rwlock_t bao_dm_list_lock;
 
-long bao_dm_ioctl(struct file *filp, unsigned int cmd,
-		  unsigned long ioctl_param);
-
 /************************************************************************************************************/
 /*                                    Backend Device Model (DM) API                                         */
 /************************************************************************************************************/
 
 /**
  * Create the backend DM
- * @id: The virtual ID of the DM
- * @return dm file descriptor on success, <0 on error
+ * @info: The DM information (id, shmem_addr, shmem_size, irq, fd)
+ * @return dm on success, NULL on error
  */
-int bao_dm_create(unsigned int id);
+struct bao_io_dm* bao_dm_create(struct bao_dm_info *info);
 
 /**
  * Destroy the backend DM
- * @id: The virtual ID of the DM
+ * @dm: The DM to be destroyed
  */
-int bao_dm_destroy(unsigned int id);
+void bao_dm_destroy(struct bao_io_dm *dm);
+
+/**
+ * Get the DM information
+ * @info: The DM information to be filled (id field contains the DM ID)
+ * @return true on success, false on error
+ */
+bool bao_dm_get_info(struct bao_dm_info *info);
+
+/**
+ * DM ioctls handler
+ * @filp: The open file pointer
+ * @cmd: The ioctl command
+ * @ioctl_param: The ioctl parameter
+ */
+long bao_dm_ioctl(struct file *filp, unsigned int cmd,
+		  unsigned long ioctl_param);
 
 /************************************************************************************************************/
 /*                                             I/O Clients API                                              */
@@ -284,6 +300,18 @@ void bao_io_dispatcher_remove(void);
 /************************************************************************************************************/
 
 /**
+ * Register the interrupt controller
+ * @dm: The DM that the interrupt controller belongs to
+ */
+int bao_intc_register(struct bao_io_dm *dm);
+
+/**
+ * Unregister the interrupt controller
+ * @dm: The DM that the interrupt controller belongs to
+ */
+void bao_intc_unregister(struct bao_io_dm *dm);
+
+/**
  * Setup the interrupt controller handler
  * @handler: The interrupt handler
  */
@@ -293,5 +321,17 @@ void bao_intc_setup_handler(void (*handler)(void));
  * Remove the interrupt controller handler
  */
 void bao_intc_remove_handler(void);
+
+/************************************************************************************************************/
+/*                                    			Driver API                                                  */
+/************************************************************************************************************/
+
+/**
+ * I/O Dispatcher kernel module ioctls handler
+ * @filp: The open file pointer
+ * @cmd: The ioctl command
+ * @ioctl_param: The ioctl parameter
+ */
+long bao_io_dispatcher_driver_ioctl(struct file *filp, unsigned int cmd, unsigned long ioctl_param);
 
 #endif

@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: GPL-2.0
 config BAO_IO_DISPATCHER
 	tristate "Bao Hypervisor I/O Dispatcher"
-	depends on BAO_SHMEM
 	help
 	  The Bao I/O Dispatcher system is a kernel module that can be loaded
 	  into the Linux kernel of the backend VMs. It is responsible for
