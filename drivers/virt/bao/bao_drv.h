@@ -31,21 +31,11 @@
 #define BAO_DM_FLAG_DESTROYING 0U
 #define BAO_DM_FLAG_CLEARING_IOREQ 1U
 
-/**
- * Contains the specific parameters of a Bao I/O request
- * @list: List node for this request
- * @virtio_request: The I/O request
-*/
-struct bao_io_request {
-	struct list_head list;
-	struct bao_virtio_request virtio_request;
-};
-
 struct bao_dm;
 struct bao_io_client;
 
-typedef int (*io_handler_t)(struct bao_io_client *client,
-			    struct bao_io_request *req);
+typedef int (*bao_io_client_handler_t)(struct bao_io_client *client,
+			    struct bao_virtio_request *req);
 
 /**
  * Bao I/O client
@@ -58,7 +48,6 @@ typedef int (*io_handler_t)(struct bao_io_client *client,
  * @virtio_requests_lock: Lock to protect virtio_requests list
  * @range_list:	I/O ranges
  * @range_lock:	Lock to protect range_list
- * @io_req_map:	The pending I/O requests bitmap
  * @handler: I/O requests handler of this client
  * @thread:	The thread which executes the handler
  * @wq:	The wait queue for the handler thread parking
@@ -74,8 +63,7 @@ struct bao_io_client {
 	rwlock_t virtio_requests_lock;
 	struct list_head range_list;
 	rwlock_t range_lock;
-	DECLARE_BITMAP(io_req_map, BAO_IO_REQUEST_MAX);
-	io_handler_t handler;
+	bao_io_client_handler_t handler;
 	struct task_struct *thread;
 	wait_queue_head_t wq;
 	void *priv;
@@ -175,7 +163,7 @@ long bao_dm_ioctl(struct file *filp, unsigned int cmd,
  * @name: The name of I/O client
  */
 struct bao_io_client *
-bao_io_client_create(struct bao_dm *dm, io_handler_t handler,
+bao_io_client_create(struct bao_dm *dm, bao_io_client_handler_t handler,
 				void *data, bool is_control, const char *name);
 
 /**
@@ -217,12 +205,19 @@ int bao_io_client_request(struct bao_io_client *client,
 			      struct bao_virtio_request *req);
 
 /**
- * Complete an I/O request from the I/O client
- * @client: The I/O client
- * @req: The request to be completed
+ * Push an I/O request into the I/O client request list
+ * @client: The I/O Client that the I/O request belongs to
+ * @req: The I/O request to be pushed
  */
-int bao_io_client_request_complete(struct bao_io_client *client,
-				       struct bao_virtio_request *req);
+void bao_io_client_push_request(struct bao_io_client *client, 
+						struct bao_virtio_request *req);
+
+/**
+ * Pop an I/O request from the I/O client request list
+ * @client: The I/O client that the I/O request belongs to
+ * @return The I/O request
+ */
+struct bao_virtio_request bao_io_client_pop_request(struct bao_io_client *client);
 
 /************************************************************************************************************/
 /*                                        Ioeventfd Client API                                              */
@@ -296,6 +291,30 @@ int bao_io_dispatcher_setup(void);
  * Remove the I/O Dispatcher
  */
 void bao_io_dispatcher_remove(void);
+
+/**
+ * Acquires the I/O requests from the Bao Hypervisor and dispatches them to the respective I/O client
+ * @dm: The DM that the I/O clients belongs to
+ * @return: 0 on success, <0 on failure
+ */
+int bao_dispatch_io(struct bao_dm *dm);
+
+/**
+ * Pause the I/O Dispatcher
+ */
+void bao_io_dispatcher_pause(void);
+
+/**
+ * Resume the I/O Dispatcher
+ */
+void bao_io_dispatcher_resume(void);
+
+/**
+ * Issue a Remote I/O Hypercall
+ * @req: The I/O request information (hypercall input and output data)
+ * @return >=0 on success, <0 on failure
+ */
+int bao_io_dispatcher_remio_hypercall(struct bao_virtio_request *req);
 
 /************************************************************************************************************/
 /*                                      Interrupt Controller API                                            */

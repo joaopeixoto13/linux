@@ -119,7 +119,7 @@ struct bao_dm* bao_dm_create(struct bao_dm_info *info)
 	// map the memory region to the kernel virtual address space
 	dm->shmem_base_addr = memremap(dm->info.shmem_addr, dm->info.shmem_size, MEMREMAP_WB);
 	if (dm->shmem_base_addr == NULL) {
-		pr_err("%s: failed to map memory region for dm %d\n", dm->info.id);
+		pr_err("%s: failed to map memory region for dm %d\n", __FUNCTION__, dm->info.id);
 		return NULL;
 	}
 

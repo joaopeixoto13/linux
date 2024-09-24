@@ -94,7 +94,7 @@ long bao_dm_ioctl(struct file *filp, unsigned int cmd,
 			pr_err("%s: memdup_user failed\n", __FUNCTION__);
 			return PTR_ERR(req);
 		}
-		rc = bao_io_client_request_complete(dm->control_client, req);
+		rc = bao_io_dispatcher_remio_hypercall(req);
 		break;
 	case BAO_IOCTL_IOEVENTFD:
 		struct bao_ioeventfd ioeventfd;

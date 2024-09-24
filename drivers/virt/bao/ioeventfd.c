@@ -233,7 +233,7 @@ static int bao_ioeventfd_deassign(struct bao_dm *dm,
  * @req: The I/O request to be handled
  */
 static int bao_ioeventfd_handler(struct bao_io_client *client,
-				 struct bao_io_request *req)
+				 struct bao_virtio_request *req)
 {
 	struct ioeventfd *p;
 
@@ -247,17 +247,16 @@ static int bao_ioeventfd_handler(struct bao_io_client *client,
 	* the `QueueNotify` field is WRITE ONLY from the driver
 	* and read only from the device.
 	*/
-	if (req->virtio_request.op == BAO_IO_READ) {
-		req->virtio_request.value = 0;
+	if (req->op == BAO_IO_READ) {
+		req->value = 0;
 		return 0;
 	}
 
 	mutex_lock(&client->dm->ioeventfds_lock);
 
 	// find the matched ioeventfd
-	p = bao_ioeventfd_match(client->dm, req->virtio_request.addr,
-			    req->virtio_request.value,
-			    req->virtio_request.access_width);
+	p = bao_ioeventfd_match(client->dm, req->addr, req->value, req->access_width);
+
 	// if matched, signal the eventfd
 	if (p)
 		eventfd_signal(p->eventfd);
