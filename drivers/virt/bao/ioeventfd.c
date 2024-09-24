@@ -228,7 +228,7 @@ static int bao_ioeventfd_deassign(struct bao_dm *dm,
 
 /**
  * Handle the Ioeventfd client I/O request
- * This function is called by the I/O client kernel thread (io_client_kernel_thread)
+ * This function is called by the I/O client kernel thread (bao_io_client_kernel_thread)
  * @client: The Ioeventfd client that the I/O request belongs to
  * @req: The I/O request to be handled
  */

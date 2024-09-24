@@ -269,7 +269,7 @@ static int bao_dispatcher_io_complete_request(struct bao_io_client *client,
  * Execution entity thread for a kernel I/O client (e.g., Ioeventfd client)
  * @data: The I/O client
  */
-static int io_client_kernel_thread(void *data)
+static int bao_io_client_kernel_thread(void *data)
 {
 	struct bao_io_client *client = data;
 	struct bao_io_request *req = kzalloc(sizeof(*req), GFP_KERNEL);
@@ -333,7 +333,7 @@ struct bao_io_client *bao_io_client_create(struct bao_dm *dm,
 
 	// if the I/O client is implemented in the kernel, create the kernel thread
 	if (client->handler) {
-		client->thread = kthread_run(io_client_kernel_thread, client,
+		client->thread = kthread_run(bao_io_client_kernel_thread, client,
 					     "%s-kthread", client->name);
 		if (IS_ERR(client->thread)) {
 			kfree(client);
