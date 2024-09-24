@@ -15,9 +15,9 @@
 #include <linux/bao.h>
 
 /**
- * asm_bao_hypercall_virtio() - Performs a VirtIO Hypercall
- * @virtio_hc_id: VirtIO Hypercall ID
- * @virtio_id: Virtual VirtIO ID (used to connect each frontend driver to the backend device)
+ * asm_bao_hypercall_remio() - Performs a Remote I/O Hypercall
+ * @remio_hc_id: VirtIO Hypercall ID
+ * @dm_id: Device Model ID
  * @addr: Access address
  * @op:	Write, Read, Ask or Notify operation
  * @value: Value to write or read
@@ -27,18 +27,18 @@
  * @return: The VirtIO request structure
  */
 static inline struct bao_virtio_request
-asm_bao_hypercall_virtio(u64 virtio_hc_id, u64 virtio_id, u64 addr, u64 op,
+asm_bao_hypercall_remio(u64 remio_hc_id, u64 dm_id, u64 addr, u64 op,
 			 u64 value, u64 cpu_id, u64 vcpu_id)
 {
 	struct bao_virtio_request ret;
 
-	register uintptr_t a0 asm("a0") = (uintptr_t)(virtio_id);
+	register uintptr_t a0 asm("a0") = (uintptr_t)(dm_id);
 	register uintptr_t a1 asm("a1") = (uintptr_t)(addr);
 	register uintptr_t a2 asm("a2") = (uintptr_t)(op);
 	register uintptr_t a3 asm("a3") = (uintptr_t)(value);
 	register uintptr_t a4 asm("a4") = (uintptr_t)(cpu_id);
 	register uintptr_t a5 asm("a5") = (uintptr_t)(vcpu_id);
-	register uintptr_t a6 asm("a6") = (uintptr_t)(virtio_hc_id);
+	register uintptr_t a6 asm("a6") = (uintptr_t)(remio_hc_id);
 	register uintptr_t a7 asm("a7") = (uintptr_t)(0x08000ba0);
 
 	asm volatile("ecall"
@@ -49,7 +49,7 @@ asm_bao_hypercall_virtio(u64 virtio_hc_id, u64 virtio_id, u64 addr, u64 op,
 		     : "memory");
 
 	ret.ret = a0;
-	ret.virtio_id = virtio_id;
+	ret.dm_id = dm_id;
 	ret.addr = a1;
 	ret.op = a2;
 	ret.value = a3;

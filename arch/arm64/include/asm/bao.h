@@ -16,9 +16,9 @@
 #include <linux/arm-smccc.h>
 
 /**
- * asm_bao_hypercall_virtio() - Performs a VirtIO Hypercall
- * @virtio_hc_id: VirtIO Hypercall ID
- * @virtio_id: Virtual VirtIO ID (used to connect each frontend driver to the backend device)
+ * asm_bao_hypercall_remio() - Performs a Remote I/O Hypercall
+ * @remio_hc_id: VirtIO Hypercall ID
+ * @dm_id: Device Model ID
  * @addr: Access address
  * @op:	Write, Read, Ask or Notify operation
  * @value: Value to write or read
@@ -28,13 +28,13 @@
  * @return: The VirtIO request structure
  */
 static inline struct bao_virtio_request
-asm_bao_hypercall_virtio(u64 virtio_hc_id, u64 virtio_id, u64 addr, u64 op,
+asm_bao_hypercall_remio(u64 remio_hc_id, u64 dm_id, u64 addr, u64 op,
 			 u64 value, u64 cpu_id, u64 vcpu_id)
 {
 	register int x0 asm("x0") =
 		ARM_SMCCC_CALL_VAL(ARM_SMCCC_FAST_CALL, ARM_SMCCC_SMC_64,
-				   ARM_SMCCC_OWNER_VENDOR_HYP, virtio_hc_id);
-	register u64 x1 asm("x1") = virtio_id;
+				   ARM_SMCCC_OWNER_VENDOR_HYP, remio_hc_id);
+	register u64 x1 asm("x1") = dm_id;
 	register u64 x2 asm("x2") = addr;
 	register u64 x3 asm("x3") = op;
 	register u64 x4 asm("x4") = value;
@@ -51,7 +51,7 @@ asm_bao_hypercall_virtio(u64 virtio_hc_id, u64 virtio_id, u64 addr, u64 op,
 		     : "memory");
 
 	ret.ret = x0;
-	ret.virtio_id = virtio_id;
+	ret.dm_id = dm_id;
 	ret.addr = x1;
 	ret.op = x2;
 	ret.value = x3;

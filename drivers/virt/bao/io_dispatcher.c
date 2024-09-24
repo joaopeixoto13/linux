@@ -42,7 +42,7 @@ static DECLARE_WORK(dispatcher_io_work, io_dispatcher);
  * Acquires the I/O requests from the Bao Hypervisor and dispatches them to the respective I/O client
  * @dm: The DM that the I/O request belongs to
  */
-static int dispatch_io(struct bao_io_dm *dm);
+static int dispatch_io(struct bao_dm *dm);
 
 /**
  * Pause the I/O Dispatcher
@@ -94,7 +94,7 @@ static int next_availabe_bit(struct bao_io_client *client)
 void bao_io_client_destroy(struct bao_io_client *client)
 {
 	struct bao_io_client *range, *next;
-	struct bao_io_dm *dm = client->dm;
+	struct bao_dm *dm = client->dm;
 
 	// pause the I/O requests dispatcher
 	io_dispatcher_pause();
@@ -134,7 +134,7 @@ void bao_io_client_destroy(struct bao_io_client *client)
 	io_dispatcher_resume();
 }
 
-void bao_io_dispatcher_destroy(struct bao_io_dm *dm)
+void bao_io_dispatcher_destroy(struct bao_dm *dm)
 {
 	struct bao_io_client *client, *next;
 
@@ -257,8 +257,8 @@ static int bao_dispatcher_io_complete_request(struct bao_io_client *client,
 		  client->io_req_map);
 
 	// notify the Hypervisor that the request was completed
-	ret = bao_hypercall_virtio(
-		req->virtio_request.virtio_id, req->virtio_request.addr,
+	ret = bao_hypercall_remio(
+		req->virtio_request.dm_id, req->virtio_request.addr,
 		req->virtio_request.op, req->virtio_request.value,
 		req->virtio_request.cpu_id, req->virtio_request.vcpu_id);
 
@@ -302,7 +302,7 @@ static int io_client_kernel_thread(void *data)
 	return 0;
 }
 
-struct bao_io_client *bao_io_client_create(struct bao_io_dm *dm,
+struct bao_io_client *bao_io_client_create(struct bao_dm *dm,
 					   io_handler_t handler, void *data,
 					   bool is_control, const char *name)
 {
@@ -477,7 +477,7 @@ static bool bao_io_req_in_range(struct bao_io_range *range, struct bao_io_reques
  * @req: The I/O request
  * @return struct bao_io_client*
  */
-static struct bao_io_client *find_io_client(struct bao_io_dm *dm,
+static struct bao_io_client *find_io_client(struct bao_dm *dm,
 					    struct bao_io_request *req)
 {
 	struct bao_io_client *client, *found = NULL;
@@ -506,7 +506,7 @@ static struct bao_io_client *find_io_client(struct bao_io_dm *dm,
 	return found ? found : dm->control_client;
 }
 
-static int dispatch_io(struct bao_io_dm *dm)
+static int dispatch_io(struct bao_dm *dm)
 {
 	struct bao_io_client *client;
 	struct bao_io_request *req;
@@ -518,8 +518,8 @@ static int dispatch_io(struct bao_io_dm *dm)
 	req = kzalloc(sizeof(*req), GFP_KERNEL);
 
 	// update the request
-	// the virtio_id is the Virtual DM id
-	req->virtio_request.virtio_id = dm->info.id;
+	// the dm_id is the Virtual DM id
+	req->virtio_request.dm_id = dm->info.id;
 	// clear the addr field
 	req->virtio_request.addr = 0;
 	// BAO_IO_ASK will extract the I/O request from the Bao Hypervisor
@@ -530,8 +530,8 @@ static int dispatch_io(struct bao_io_dm *dm)
 	req->virtio_request.vcpu_id = 0;
 
 	// perform a Hypercall to get the I/O request from the Bao Hypervisor
-	ret = bao_hypercall_virtio(
-		req->virtio_request.virtio_id, req->virtio_request.addr,
+	ret = bao_hypercall_remio(
+		req->virtio_request.dm_id, req->virtio_request.addr,
 		req->virtio_request.op, req->virtio_request.value,
 		req->virtio_request.cpu_id, req->virtio_request.vcpu_id);
 
@@ -582,7 +582,7 @@ err_unlock_1:
 
 static void io_dispatcher(struct work_struct *work)
 {
-	struct bao_io_dm *dm;
+	struct bao_dm *dm;
 	// for each DM, dispatch the I/O requests
 	read_lock(&bao_dm_list_lock);
 	list_for_each_entry(dm, &bao_dm_list, list) {
@@ -635,7 +635,7 @@ int io_dispatcher_pooling_handler(void *data)
 }
 #endif
 
-int bao_io_dispatcher_init(struct bao_io_dm *dm)
+int bao_io_dispatcher_init(struct bao_dm *dm)
 {
 	// Do nothing
 	return 0;

@@ -22,11 +22,11 @@
  * @wait: Entry of wait-queue
  * @shutdown: Async shutdown work
  * @eventfd: Associated eventfd to poll
- * @list: Entry within &bao_io_dm.irqfds of irqfds of a DM
+ * @list: Entry within &bao_dm.irqfds of irqfds of a DM
  * @pt:	Structure for select/poll on the associated eventfd
  */
 struct irqfd {
-	struct bao_io_dm *dm;
+	struct bao_dm *dm;
 	wait_queue_entry_t wait;
 	struct work_struct shutdown;
 	struct eventfd_ctx *eventfd;
@@ -63,7 +63,7 @@ static void bao_irqfd_shutdown(struct irqfd *irqfd)
 static int bao_irqfd_inject(int id)
 {
 	// notify the Hypervisor about the event
-	struct bao_virtio_request ret = bao_hypercall_virtio(id, 0, BAO_IO_NOTIFY, 0, 0, 0);
+	struct bao_virtio_request ret = bao_hypercall_remio(id, 0, BAO_IO_NOTIFY, 0, 0, 0);
 
 	if (ret.ret != 0) {
 		return -EFAULT;
@@ -85,7 +85,7 @@ static int bao_irqfd_wakeup(wait_queue_entry_t *wait, unsigned int mode,
 {
 	unsigned long poll_bits = (unsigned long)key;
 	struct irqfd *irqfd;
-	struct bao_io_dm *dm;
+	struct bao_dm *dm;
 
 	// get the irqfd object from the wait queue
 	irqfd = container_of(wait, struct irqfd, wait);
@@ -130,7 +130,7 @@ static void bao_irqfd_poll_func(struct file *file, wait_queue_head_t *wqh,
 static void irqfd_shutdown_work(struct work_struct *work)
 {
 	struct irqfd *irqfd;
-	struct bao_io_dm *dm;
+	struct bao_dm *dm;
 
 	// get the irqfd from the work
 	irqfd = container_of(work, struct irqfd, shutdown);
@@ -150,7 +150,7 @@ static void irqfd_shutdown_work(struct work_struct *work)
  * @dm: The DM to assign the eventfd
  * @args: The &struct bao_irqfd to assign
  */
-static int bao_irqfd_assign(struct bao_io_dm *dm, struct bao_irqfd *args)
+static int bao_irqfd_assign(struct bao_dm *dm, struct bao_irqfd *args)
 {
 	struct eventfd_ctx *eventfd = NULL;
 	struct irqfd *irqfd, *tmp;
@@ -231,7 +231,7 @@ out:
  * @dm: The DM to deassign the eventfd
  * @args: The &struct bao_irqfd to deassign
  */
-static int bao_irqfd_deassign(struct bao_io_dm *dm, struct bao_irqfd *args)
+static int bao_irqfd_deassign(struct bao_dm *dm, struct bao_irqfd *args)
 {
 	struct irqfd *irqfd, *tmp;
 	struct eventfd_ctx *eventfd;
@@ -257,7 +257,7 @@ static int bao_irqfd_deassign(struct bao_io_dm *dm, struct bao_irqfd *args)
 	return 0;
 }
 
-int bao_irqfd_server_config(struct bao_io_dm *dm, struct bao_irqfd *config)
+int bao_irqfd_server_config(struct bao_dm *dm, struct bao_irqfd *config)
 {
 	// check if the DM and configuration are valid
 	if (WARN_ON(!dm || !config))
@@ -271,7 +271,7 @@ int bao_irqfd_server_config(struct bao_io_dm *dm, struct bao_irqfd *config)
 	return bao_irqfd_assign(dm, config);
 }
 
-int bao_irqfd_server_init(struct bao_io_dm *dm)
+int bao_irqfd_server_init(struct bao_dm *dm)
 {
 	char name[BAO_NAME_MAX_LEN];
 
@@ -289,7 +289,7 @@ int bao_irqfd_server_init(struct bao_io_dm *dm)
 	return 0;
 }
 
-void bao_irqfd_server_destroy(struct bao_io_dm *dm)
+void bao_irqfd_server_destroy(struct bao_dm *dm)
 {
 	struct irqfd *irqfd, *next;
 

@@ -1,9 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 /*
- * Userspace interface for /dev/bao - Bao Hypervisor Service Module
- *
- * This file can be used by applications that need to communicate with Bao
- * via the ioctl interface.
+ * Provides the Bao Hypervisor IOCTLs and global structures
  *
  * Copyright (c) Bao Project and Contributors. All rights reserved.
  *
@@ -29,7 +26,7 @@
 
 /**
  * Contains the specific parameters of a Bao VirtIO request
- * @virtio_id: VirtIO ID (used to connect each frontend driver to the backend device)
+ * @dm_id: Device Model ID
  * @addr: Gives the MMIO register address that was accessed
  * @op: Write, Read, Ask or Notify operation
  * @value: Value to write or read
@@ -39,7 +36,7 @@
  * @ret: Return value
 */
 struct bao_virtio_request {
-	__u64 virtio_id;
+	__u64 dm_id;
 	__u64 addr;
 	__u64 op;
 	__u64 value;
@@ -100,7 +97,7 @@ struct bao_dm_info {
  * Common IOCTL IDs definition for Bao userspace
  * Follows the convention of the Linux kernel, listed in Documentation/driver-api/ioctl.rst
  */
-#define BAO_IOCTL_IO_DM_GET_INFO _IOWR(BAO_IOCTL_TYPE, 0x01, struct bao_dm_info)
+#define BAO_IOCTL_DM_GET_INFO _IOWR(BAO_IOCTL_TYPE, 0x01, struct bao_dm_info)
 #define BAO_IOCTL_IO_CLIENT_ATTACH \
 	_IOWR(BAO_IOCTL_TYPE, 0x02, struct bao_virtio_request)
 #define BAO_IOCTL_IO_REQUEST_NOTIFY_COMPLETED \

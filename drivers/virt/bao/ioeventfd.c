@@ -34,7 +34,7 @@ struct ioeventfd {
  * @dm:	The DM that the ioeventfd belongs to
  * @p: The ioeventfd to shutdown
  */
-static void bao_ioeventfd_shutdown(struct bao_io_dm *dm,
+static void bao_ioeventfd_shutdown(struct bao_dm *dm,
 				   struct ioeventfd *p)
 {
 	lockdep_assert_held(&dm->ioeventfds_lock);
@@ -76,7 +76,7 @@ static bool bao_ioeventfd_config_valid(struct bao_ioeventfd *config)
  * @ioeventfd: The ioeventfd to check
  * @return: bool
  */
-static bool bao_ioeventfd_is_conflict(struct bao_io_dm *dm,
+static bool bao_ioeventfd_is_conflict(struct bao_dm *dm,
 				      struct ioeventfd *ioeventfd)
 {
 	struct ioeventfd *p;
@@ -102,7 +102,7 @@ static bool bao_ioeventfd_is_conflict(struct bao_io_dm *dm,
  * @len: The length of I/O request
  * @return: The matched ioeventfd or NULL
  */
-static struct ioeventfd *bao_ioeventfd_match(struct bao_io_dm *dm, u64 addr,
+static struct ioeventfd *bao_ioeventfd_match(struct bao_dm *dm, u64 addr,
 					 u64 data, int len)
 {
 	struct ioeventfd *p = NULL;
@@ -123,7 +123,7 @@ static struct ioeventfd *bao_ioeventfd_match(struct bao_io_dm *dm, u64 addr,
  * @dm:	The DM to assign the eventfd to
  * @config:	The configuration of the eventfd
  */
-static int bao_ioeventfd_assign(struct bao_io_dm *dm,
+static int bao_ioeventfd_assign(struct bao_dm *dm,
 				struct bao_ioeventfd *config)
 {
 	struct eventfd_ctx *eventfd;
@@ -197,7 +197,7 @@ err:
  * @dm:	The DM to deassign the eventfd from
  * @config:	The configuration of the eventfd
  */
-static int bao_ioeventfd_deassign(struct bao_io_dm *dm,
+static int bao_ioeventfd_deassign(struct bao_dm *dm,
 				  struct bao_ioeventfd *config)
 {
 	struct ioeventfd *p;
@@ -266,7 +266,7 @@ static int bao_ioeventfd_handler(struct bao_io_client *client,
 	return 0;
 }
 
-int bao_ioeventfd_client_config(struct bao_io_dm *dm, struct bao_ioeventfd *config)
+int bao_ioeventfd_client_config(struct bao_dm *dm, struct bao_ioeventfd *config)
 {
 	// check if the DM and configuration are valid
 	if (WARN_ON(!dm || !config))
@@ -280,7 +280,7 @@ int bao_ioeventfd_client_config(struct bao_io_dm *dm, struct bao_ioeventfd *conf
 	return bao_ioeventfd_assign(dm, config);
 }
 
-int bao_ioeventfd_client_init(struct bao_io_dm *dm)
+int bao_ioeventfd_client_init(struct bao_dm *dm)
 {
 	char name[BAO_NAME_MAX_LEN];
 
@@ -300,7 +300,7 @@ int bao_ioeventfd_client_init(struct bao_io_dm *dm)
 	return 0;
 }
 
-void bao_ioeventfd_client_destroy(struct bao_io_dm *dm)
+void bao_ioeventfd_client_destroy(struct bao_dm *dm)
 {
 	struct ioeventfd *p, *next;
 

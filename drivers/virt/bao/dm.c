@@ -34,7 +34,7 @@ static int bao_dm_open(struct inode *inode, struct file *filp)
 
 static int bao_dm_release(struct inode *inode, struct file *filp)
 {
-	struct bao_io_dm *dm = filp->private_data;
+	struct bao_dm *dm = filp->private_data;
 	kfree(dm);
 	return 0;
 }
@@ -50,7 +50,7 @@ static int bao_dm_release(struct inode *inode, struct file *filp)
  */
 static int bao_dm_mmap(struct file *filp, struct vm_area_struct *vma)
 {
-	struct bao_io_dm *dm = filp->private_data;
+	struct bao_dm *dm = filp->private_data;
 
     unsigned long vsize = vma->vm_end - vma->vm_start;
 
@@ -70,9 +70,9 @@ static struct file_operations bao_dm_fops = {
 	.mmap = bao_dm_mmap,
 };
 
-struct bao_io_dm* bao_dm_create(struct bao_dm_info *info)
+struct bao_dm* bao_dm_create(struct bao_dm_info *info)
 {
-	struct bao_io_dm *dm;
+	struct bao_dm *dm;
 	char name[BAO_NAME_MAX_LEN];
 
 	// verify if already exists a DM with the same virtual ID
@@ -86,7 +86,7 @@ struct bao_io_dm* bao_dm_create(struct bao_dm_info *info)
 	read_unlock(&bao_dm_list_lock);
 
 	// allocate memory for the DM
-	dm = kzalloc(sizeof(struct bao_io_dm), GFP_KERNEL);
+	dm = kzalloc(sizeof(struct bao_dm), GFP_KERNEL);
 	if (!dm) {
 		pr_err("%s: kzalloc failed\n", __FUNCTION__);
 		return NULL;
@@ -122,10 +122,10 @@ struct bao_io_dm* bao_dm_create(struct bao_dm_info *info)
 	return dm;
 }
 
-void bao_dm_destroy(struct bao_io_dm *dm)
+void bao_dm_destroy(struct bao_dm *dm)
 {
 	// mark as destroying
-	set_bit(BAO_IO_DM_FLAG_DESTROYING, &dm->flags);
+	set_bit(BAO_DM_FLAG_DESTROYING, &dm->flags);
 
 	// remove the DM from the list
 	write_lock_bh(&bao_dm_list_lock);
@@ -146,7 +146,7 @@ void bao_dm_destroy(struct bao_io_dm *dm)
 	bao_io_dispatcher_destroy(dm);
 
 	// clear the destroying flag
-	clear_bit(BAO_IO_DM_FLAG_DESTROYING, &dm->flags);
+	clear_bit(BAO_DM_FLAG_DESTROYING, &dm->flags);
 
 	// free the DM
 	kfree(dm);
@@ -163,7 +163,7 @@ void bao_dm_destroy(struct bao_io_dm *dm)
  * @dm: The DM to create the anonymous inode
  * @return: >=0 on success, <0 on failure
  */
-static int bao_dm_create_anonymous_inode(struct bao_io_dm *dm)
+static int bao_dm_create_anonymous_inode(struct bao_dm *dm)
 {
 	char name[BAO_NAME_MAX_LEN];
 	struct file *file;
@@ -202,7 +202,7 @@ static int bao_dm_create_anonymous_inode(struct bao_io_dm *dm)
 
 bool bao_dm_get_info(struct bao_dm_info *info)
 {
-	struct bao_io_dm *dm;
+	struct bao_dm *dm;
 	bool rc = false;
 
 	read_lock(&bao_dm_list_lock);

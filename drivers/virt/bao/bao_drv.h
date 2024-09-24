@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Provides some definitions for the Bao Hypervisor Modules
+ * Provides some definitions for the Bao Hypervisor modules
  *
  * Copyright (c) Bao Project and Contributors. All rights reserved.
  *
@@ -8,8 +8,8 @@
  *	João Peixoto <joaopeixotooficial@gmail.com>
  */
 
-#ifndef __BAO_HSM_DRV_H
-#define __BAO_HSM_DRV_H
+#ifndef __BAO_DRV_H
+#define __BAO_DRV_H
 
 #include <linux/bao.h>
 #include <linux/types.h>
@@ -28,8 +28,8 @@
 
 #define BAO_IO_CLIENT_DESTROYING 0U
 
-#define BAO_IO_DM_FLAG_DESTROYING 0U
-#define BAO_IO_DM_FLAG_CLEARING_IOREQ 1U
+#define BAO_DM_FLAG_DESTROYING 0U
+#define BAO_DM_FLAG_CLEARING_IOREQ 1U
 
 /**
  * Contains the specific parameters of a Bao I/O request
@@ -41,7 +41,7 @@ struct bao_io_request {
 	struct bao_virtio_request virtio_request;
 };
 
-struct bao_io_dm;
+struct bao_dm;
 struct bao_io_client;
 
 typedef int (*io_handler_t)(struct bao_io_client *client,
@@ -66,7 +66,7 @@ typedef int (*io_handler_t)(struct bao_io_client *client,
  */
 struct bao_io_client {
 	char name[BAO_NAME_MAX_LEN];
-	struct bao_io_dm *dm;
+	struct bao_dm *dm;
 	struct list_head list;
 	bool is_control;
 	unsigned long flags;
@@ -96,7 +96,7 @@ struct bao_io_client {
  * @io_clients:	List to link all bao_io_client
  * @control_client:	Control client
  */
-struct bao_io_dm {
+struct bao_dm {
 	struct list_head list;
 	struct bao_dm_info info;
 	unsigned long flags;
@@ -136,13 +136,13 @@ extern rwlock_t bao_dm_list_lock;
  * @info: The DM information (id, shmem_addr, shmem_size, irq, fd)
  * @return dm on success, NULL on error
  */
-struct bao_io_dm* bao_dm_create(struct bao_dm_info *info);
+struct bao_dm* bao_dm_create(struct bao_dm_info *info);
 
 /**
  * Destroy the backend DM
  * @dm: The DM to be destroyed
  */
-void bao_dm_destroy(struct bao_io_dm *dm);
+void bao_dm_destroy(struct bao_dm *dm);
 
 /**
  * Get the DM information
@@ -173,7 +173,7 @@ long bao_dm_ioctl(struct file *filp, unsigned int cmd,
  * @name: The name of I/O client
  */
 struct bao_io_client *
-bao_io_client_create(struct bao_io_dm *dm, io_handler_t handler,
+bao_io_client_create(struct bao_dm *dm, io_handler_t handler,
 				void *data, bool is_control, const char *name);
 
 /**
@@ -230,20 +230,20 @@ int bao_io_client_request_complete(struct bao_io_client *client,
  * Initialize the Ioeventfd client
  * @dm: The DM that the Ioeventfd client belongs to
  */
-int bao_ioeventfd_client_init(struct bao_io_dm *dm);
+int bao_ioeventfd_client_init(struct bao_dm *dm);
 
 /**
  * Destroy the Ioeventfd client
  * @dm: The DM that the Ioeventfd client belongs to
  */
-void bao_ioeventfd_client_destroy(struct bao_io_dm *dm);
+void bao_ioeventfd_client_destroy(struct bao_dm *dm);
 
 /**
  * Configure the Ioeventfd client
  * @dm: The DM that the Ioeventfd client belongs to
  * @config: The ioeventfd configuration
  */
-int bao_ioeventfd_client_config(struct bao_io_dm *dm,
+int bao_ioeventfd_client_config(struct bao_dm *dm,
 			 struct bao_ioeventfd *config);
 
 /************************************************************************************************************/
@@ -254,20 +254,20 @@ int bao_ioeventfd_client_config(struct bao_io_dm *dm,
  * Initialize the Irqfd server
  * @dm: The DM that the Irqfd server belongs to
  */
-int bao_irqfd_server_init(struct bao_io_dm *dm);
+int bao_irqfd_server_init(struct bao_dm *dm);
 
 /**
  * Destroy the Irqfd server
  * @dm: The DM that the Irqfd server belongs to
  */
-void bao_irqfd_server_destroy(struct bao_io_dm *dm);
+void bao_irqfd_server_destroy(struct bao_dm *dm);
 
 /**
  * Configure the Irqfd server
  * @dm: The DM that the Irqfd server belongs to
  * @config: The irqfd configuration
  */
-int bao_irqfd_server_config(struct bao_io_dm *dm, struct bao_irqfd *config);
+int bao_irqfd_server_config(struct bao_dm *dm, struct bao_irqfd *config);
 
 /************************************************************************************************************/
 /*                                         I/O Dispatcher API                                               */
@@ -277,13 +277,13 @@ int bao_irqfd_server_config(struct bao_io_dm *dm, struct bao_irqfd *config);
  * Initialize the I/O Dispatcher
  * @dm: The DM to be initialized on the I/O Dispatcher
  */
-int bao_io_dispatcher_init(struct bao_io_dm *dm);
+int bao_io_dispatcher_init(struct bao_dm *dm);
 
 /**
  * Destroy the I/O Dispatcher
  * @dm: The DM to be destroyed on the I/O Dispatcher
  */
-void bao_io_dispatcher_destroy(struct bao_io_dm *dm);
+void bao_io_dispatcher_destroy(struct bao_dm *dm);
 
 /**
  * Setup the I/O Dispatcher
@@ -303,13 +303,13 @@ void bao_io_dispatcher_remove(void);
  * Register the interrupt controller
  * @dm: The DM that the interrupt controller belongs to
  */
-int bao_intc_register(struct bao_io_dm *dm);
+int bao_intc_register(struct bao_dm *dm);
 
 /**
  * Unregister the interrupt controller
  * @dm: The DM that the interrupt controller belongs to
  */
-void bao_intc_unregister(struct bao_io_dm *dm);
+void bao_intc_unregister(struct bao_dm *dm);
 
 /**
  * Setup the interrupt controller handler
@@ -334,4 +334,4 @@ void bao_intc_remove_handler(void);
  */
 long bao_io_dispatcher_driver_ioctl(struct file *filp, unsigned int cmd, unsigned long ioctl_param);
 
-#endif
+#endif /* __BAO_DRV_H */

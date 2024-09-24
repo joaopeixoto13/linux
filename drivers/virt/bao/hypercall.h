@@ -14,12 +14,12 @@
 #include <asm/bao.h>
 #include <linux/bao.h>
 
-/* VirtIO Hypercall ID */
-#define VIRTIO_HC_ID 0x2
+/* Remote I/O Hypercall ID */
+#define REMIO_HC_ID 0x2
 
 /**
- * bao_hypercall_virtio() - Performs a I/O Hypercall
- * @virtio_id:	Virtual VirtIO ID (used to connect each frontend driver to the backend device)
+ * bao_hypercall_remio() - Performs a Remote I/O Hypercall
+ * @dm_id:	Device Model ID
  * @addr: Access address
  * @op:		Write, Read, Ask or Notify operation
  * @value:	Value to write or read
@@ -29,10 +29,10 @@
  * @return: The VirtIO request structure
  */
 static inline struct bao_virtio_request
-bao_hypercall_virtio(u64 virtio_id, u64 addr, u64 op, u64 value, u64 cpu_id,
+bao_hypercall_remio(u64 dm_id, u64 addr, u64 op, u64 value, u64 cpu_id,
 		     u64 vcpu_id)
 {
-	return asm_bao_hypercall_virtio(VIRTIO_HC_ID, virtio_id, addr, op,
+	return asm_bao_hypercall_remio(REMIO_HC_ID, dm_id, addr, op,
 					value, cpu_id, vcpu_id);
 }
 

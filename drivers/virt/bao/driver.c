@@ -99,7 +99,7 @@ static int bao_io_dispatcher_driver_register(struct platform_device *pdev)
 	void* reg_base_addr = NULL;
 	resource_size_t reg_size;
 	struct bao_iodispatcher_drv *bao_io_dispatcher_drv;
-	struct bao_io_dm *dm;
+	struct bao_dm *dm;
 	struct bao_dm_info dm_info;
 
 	// setup the I/O Dispatcher system
@@ -210,7 +210,7 @@ err_io_dispatcher:
  */
 static void bao_io_dispatcher_driver_unregister(struct platform_device *pdev)
 {
-	struct bao_io_dm *dm;
+	struct bao_dm *dm;
 
 	// remove the I/O Dispatcher system
 	bao_io_dispatcher_remove();

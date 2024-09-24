@@ -27,7 +27,7 @@ long bao_io_dispatcher_driver_ioctl(struct file *filp, unsigned int cmd, unsigne
 	struct bao_dm_info *info;
 
 	switch (cmd) {
-	case BAO_IOCTL_IO_DM_GET_INFO:
+	case BAO_IOCTL_DM_GET_INFO:
 		info = memdup_user((void __user *)ioctl_param,
 				  sizeof(struct bao_dm_info));
 		if (IS_ERR(info)) {
@@ -61,7 +61,7 @@ long bao_dm_ioctl(struct file *filp, unsigned int cmd,
 	int rc = -EINVAL;
 
 	// get the backend DM pointer from the file pointer private data
-	struct bao_io_dm *dm = filp->private_data;
+	struct bao_dm *dm = filp->private_data;
 
 	switch (cmd) {
 	case BAO_IOCTL_IO_CLIENT_ATTACH:
