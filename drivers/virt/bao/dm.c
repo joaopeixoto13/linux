@@ -116,8 +116,13 @@ struct bao_dm* bao_dm_create(struct bao_dm_info *info)
 	// initialize the Irqfd server
 	bao_irqfd_server_init(dm);
 
-	// return the file descriptor to userspace for the
-	// fronteend DM to request services from the associated backend DM
+	// map the memory region to the kernel virtual address space
+	dm->shmem_base_addr = memremap(dm->info.shmem_addr, dm->info.shmem_size, MEMREMAP_WB);
+	if (dm->shmem_base_addr == NULL) {
+		pr_err("%s: failed to map memory region for dm %d\n", dm->info.id);
+		return NULL;
+	}
+
 	return dm;
 }
 
@@ -136,6 +141,9 @@ void bao_dm_destroy(struct bao_dm *dm)
 	dm->info.shmem_addr = 0;
 	dm->info.shmem_size = 0;
 	dm->info.irq = 0;
+
+	// unmap the memory region
+	memunmap(dm->shmem_base_addr);
 
 	// release the DM file descriptor
 	put_unused_fd(dm->info.fd);

@@ -85,6 +85,7 @@ struct bao_io_client {
  * Bao backend device model (DM)
  * @list: Entry within global list of all DMs
  * @info: DM information (id, shmem_addr, shmem_size, irq, fd)
+ * @shmem_base_addr: The base address of the shared memory (only used for unmapping purposes)
  * @flags: Flags (BAO_IO_DISPATCHER_DM_*)
  * @ioeventfds: List to link all bao_ioeventfd
  * @ioeventfds_lock: Lock to protect ioeventfds list
@@ -99,6 +100,7 @@ struct bao_io_client {
 struct bao_dm {
 	struct list_head list;
 	struct bao_dm_info info;
+	void *shmem_base_addr;
 	unsigned long flags;
 	struct list_head ioeventfds;
 	struct mutex ioeventfds_lock;

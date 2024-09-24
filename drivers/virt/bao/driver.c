@@ -96,7 +96,6 @@ static int bao_io_dispatcher_driver_register(struct platform_device *pdev)
 	struct module *owner = THIS_MODULE;
     struct resource *r;
 	dev_t devt;
-	void* reg_base_addr = NULL;
 	resource_size_t reg_size;
 	struct bao_iodispatcher_drv *bao_io_dispatcher_drv;
 	struct bao_dm *dm;
@@ -134,14 +133,6 @@ static int bao_io_dispatcher_driver_register(struct platform_device *pdev)
 		// get the memory region size
 		reg_size = resource_size(r);
 
-		// map the memory region to the kernel virtual address space
-		reg_base_addr = memremap(r->start, reg_size, MEMREMAP_WB);
-		if (reg_base_addr == NULL) {
-			dev_err(&pdev->dev, "failed to map memory region for dm %d\n", i);
-			ret = -ENOMEM;
-			goto err_io_dispatcher;
-		}
-
 		// set the device model information
 		dm_info.id = i;
 		dm_info.shmem_addr = (unsigned long)r->start;
@@ -154,7 +145,7 @@ static int bao_io_dispatcher_driver_register(struct platform_device *pdev)
 		if (dm == NULL) {
 			dev_err(&pdev->dev, "failed to create Bao I/O Dispatcher device model %d\n", i);
 			ret = -ENOMEM;
-			goto err_unmap;
+			goto err_io_dispatcher;
 		}
 
 		// register the interrupt
@@ -195,8 +186,6 @@ err_unregister_dms: {
 		bao_dm_destroy(dm);
 	}
 }
-err_unmap:
-	memunmap(reg_base_addr);
 err_io_dispatcher:
 	bao_io_dispatcher_remove();
 
