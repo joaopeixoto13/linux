@@ -40,13 +40,12 @@ static int bao_dm_release(struct inode *inode, struct file *filp)
 }
 
 /**
- * ioctl handler for DM mmap
+ * @brief IOCTL handler for the backend DM mmap operation
+ * @note This function is used to map the previosuly allocated kernel memory region
+ * of the backend DM to the userspace virtual address space
  * @filp: The file pointer of the DM
  * @vma: Contains the information about the virtual address range that is used to access
- *
- * @note:
- * The device driver only has to build suitable page tables for the address range and,
- * if necessary, replace vma->vm_ops with a new set of operations.
+ * @return: 0 on success, <0 on failure
  */
 static int bao_dm_mmap(struct file *filp, struct vm_area_struct *vma)
 {
@@ -137,6 +136,8 @@ void bao_dm_destroy(struct bao_dm *dm)
 	dm->info.shmem_addr = 0;
 	dm->info.shmem_size = 0;
 	dm->info.irq = 0;
+
+	// release the DM file descriptor
 	put_unused_fd(dm->info.fd);
 
 	// destroy the Irqfd server
