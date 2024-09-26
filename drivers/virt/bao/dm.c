@@ -60,12 +60,47 @@ static int bao_dm_mmap(struct file *filp, struct vm_area_struct *vma)
     return 0;
 }
 
+/**
+ * @brief IOCTL handler for the backend DM llseek operation
+ * @file: The file pointer of the DM
+ * @offset: The offset to seek
+ * @whence: The seek operation
+ * @return: >=0 on success, <0 on failure
+ */
+static loff_t bao_dm_llseek(struct file *file, loff_t offset, int whence)
+{
+    struct bao_dm *bao = file->private_data;
+    loff_t new_pos;
+
+    switch (whence) {
+    case SEEK_SET:
+        new_pos = offset;
+        break;
+    case SEEK_CUR:
+        new_pos = file->f_pos + offset;
+        break;
+    case SEEK_END:
+        new_pos = bao->info.shmem_addr + bao->info.shmem_size + offset;
+        break;
+    default:
+        return -EINVAL;
+    }
+
+    // Ensure new_pos is within the valid range of the total shared memory
+    if (new_pos < 0 || (new_pos > (bao->info.shmem_addr + bao->info.shmem_size + offset)))
+        return -EINVAL;
+
+    file->f_pos = new_pos;
+
+    return new_pos;
+}
+
 static struct file_operations bao_dm_fops = {
 	.owner = THIS_MODULE,
 	.open = bao_dm_open,
 	.release = bao_dm_release,
 	.unlocked_ioctl = bao_dm_ioctl,
-	.llseek = noop_llseek,
+	.llseek = bao_dm_llseek,
 	.mmap = bao_dm_mmap,
 };
 
