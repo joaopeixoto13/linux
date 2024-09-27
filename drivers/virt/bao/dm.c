@@ -249,7 +249,6 @@ bool bao_dm_get_info(struct bao_dm_info *info)
 	struct bao_dm *dm;
 	bool rc = false;
 
-	read_lock(&bao_dm_list_lock);
 	list_for_each_entry(dm, &bao_dm_list, list) {
 		if (dm->info.id == info->id) {
 			info->shmem_addr = dm->info.shmem_addr;
@@ -260,7 +259,6 @@ bool bao_dm_get_info(struct bao_dm_info *info)
 			break;
 		}
 	}
-	read_unlock(&bao_dm_list_lock);
 
 	return rc;
 }

@@ -260,10 +260,8 @@ struct bao_io_client *bao_io_client_create(struct bao_dm *dm,
 	// back up any pending requests that could potentially be lost
 	// (e.g., if the backend VM is initialized after the frontend VM)
 	if (is_control) {
-		read_lock(&bao_dm_list_lock);
 		while (bao_dispatch_io(dm) > 0)
 			;
-		read_unlock(&bao_dm_list_lock);
 	} 
 
 	return client;
