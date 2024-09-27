@@ -198,7 +198,7 @@ void bao_io_dispatcher_resume(void)
  * if selected the pooling mode
  */
 #ifndef CONFIG_BAO_IO_DISPATCHER_INTERRUPT_MODE
-int io_dispatcher_pooling_handler(void *data)
+int bao_io_dispatcher_pooling_handler(void *data)
 {
 	// resume the I/O requests dispatcher
 	bao_io_dispatcher_resume();
@@ -229,7 +229,7 @@ int bao_io_dispatcher_setup(void)
 	// Create timer
 	sev.sigev_notify = SIGEV_THREAD; // Notify via thread
 	sev.sigev_notify_function =
-		io_dispatcher_pooling_handler; // Callback function
+		bao_io_dispatcher_pooling_handler; // Callback function
 	sev.sigev_value.sival_ptr = &timerid; // Pass timer ID to callback
 
 	if (timer_create(CLOCK_REALTIME, &sev, &timerid) == -1) {
