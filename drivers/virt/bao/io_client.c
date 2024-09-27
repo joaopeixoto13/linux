@@ -99,7 +99,7 @@ void bao_io_client_destroy(struct bao_io_client *client)
 	struct bao_dm *dm = client->dm;
 
 	// pause the I/O requests dispatcher
-	bao_io_dispatcher_pause();
+	bao_io_dispatcher_pause(dm);
 
 	// set the destroying flag
 	set_bit(BAO_IO_CLIENT_DESTROYING, &client->flags);
@@ -129,11 +129,11 @@ void bao_io_client_destroy(struct bao_io_client *client)
 	list_del(&client->list);
 	spin_unlock_bh(&dm->io_clients_lock);
 
+	// resume the I/O requests dispatcher
+	bao_io_dispatcher_resume(dm);
+
 	// free the allocated I/O client object
 	kfree(client);
-
-	// resume the I/O requests dispatcher
-	bao_io_dispatcher_resume();
 }
 
 int bao_io_client_attach(struct bao_io_client *client)

@@ -301,13 +301,15 @@ int bao_dispatch_io(struct bao_dm *dm);
 
 /**
  * Pause the I/O Dispatcher
+ * @dm: The DM that will be paused
  */
-void bao_io_dispatcher_pause(void);
+void bao_io_dispatcher_pause(struct bao_dm *dm);
 
 /**
  * Resume the I/O Dispatcher
+ * @dm: The DM that will be resumed
  */
-void bao_io_dispatcher_resume(void);
+void bao_io_dispatcher_resume(struct bao_dm *dm);
 
 /**
  * Issue a Remote I/O Hypercall
@@ -335,8 +337,9 @@ void bao_intc_unregister(struct bao_dm *dm);
 /**
  * Setup the interrupt controller handler
  * @handler: The interrupt handler
+ * @dm: The DM that the interrupt controller belongs to
  */
-void bao_intc_setup_handler(void (*handler)(void));
+void bao_intc_setup_handler(void (*handler)(struct bao_dm *dm));
 
 /**
  * Remove the interrupt controller handler

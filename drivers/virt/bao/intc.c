@@ -16,18 +16,20 @@
 #include "bao_drv.h"
 
 // handler for the interrupt
-static void (*bao_intc_handler)(void);
+static void (*bao_intc_handler)(struct bao_dm *dm);
 
 static irqreturn_t bao_interrupt_handler(int irq, void *dev)
 {
+	struct bao_dm *dm = (struct bao_dm *)dev;
+
 	// if the handler is set, call it
 	if (bao_intc_handler)
-		bao_intc_handler();
+		bao_intc_handler(dm);
 
 	return IRQ_HANDLED;
 }
 
-void bao_intc_setup_handler(void (*handler)(void))
+void bao_intc_setup_handler(void (*handler)(struct bao_dm *dm))
 {
 	bao_intc_handler = handler;
 }
