@@ -60,7 +60,7 @@ struct bao_io_client {
 	bool is_control;
 	unsigned long flags;
 	struct list_head virtio_requests;
-	rwlock_t virtio_requests_lock;
+	struct mutex virtio_requests_lock;
 	struct list_head range_list;
 	rwlock_t range_lock;
 	bao_io_client_handler_t handler;

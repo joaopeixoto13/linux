@@ -55,9 +55,9 @@ void bao_io_client_push_request(struct bao_io_client *client,
     io_req->virtio_request = *req;
 
 	// add the request to the end of the requests list
-	write_lock_bh(&client->virtio_requests_lock);
+	mutex_lock(&client->virtio_requests_lock);
 	list_add_tail(&io_req->list, &client->virtio_requests);
-	write_unlock_bh(&client->virtio_requests_lock);
+	mutex_unlock(&client->virtio_requests_lock);
 }
 
 struct bao_virtio_request bao_io_client_pop_request(struct bao_io_client *client)
@@ -69,13 +69,12 @@ struct bao_virtio_request bao_io_client_pop_request(struct bao_io_client *client
     ret.ret = -EINVAL;
 
 	// pop the first request from the list
-	write_lock_bh(&client->virtio_requests_lock);
+	mutex_lock(&client->virtio_requests_lock);
 	req = list_first_entry_or_null(&client->virtio_requests,
 				       struct bao_io_request, list);
-	write_unlock_bh(&client->virtio_requests_lock);
+	mutex_unlock(&client->virtio_requests_lock);
 
 	if (req == NULL) {
-		write_unlock_bh(&client->virtio_requests_lock);
 		return ret;
 	}
 
@@ -83,9 +82,9 @@ struct bao_virtio_request bao_io_client_pop_request(struct bao_io_client *client
 	ret = req->virtio_request;
 
 	// delete the request from the list
-	write_lock_bh(&client->virtio_requests_lock);
+	mutex_lock(&client->virtio_requests_lock);
 	list_del(&req->list);
-	write_unlock_bh(&client->virtio_requests_lock);
+	mutex_unlock(&client->virtio_requests_lock);
 
 	// free the request
 	kfree(req);
@@ -232,7 +231,6 @@ struct bao_io_client *bao_io_client_create(struct bao_dm *dm,
 	client->is_control = is_control;
 	if (name)
 		strncpy(client->name, name, sizeof(client->name) - 1);
-	rwlock_init(&client->virtio_requests_lock);
 	INIT_LIST_HEAD(&client->virtio_requests);
 	rwlock_init(&client->range_lock);
 	INIT_LIST_HEAD(&client->range_list);
