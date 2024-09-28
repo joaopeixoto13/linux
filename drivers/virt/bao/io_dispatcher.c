@@ -104,11 +104,9 @@ static struct bao_io_client *bao_find_io_client(struct bao_dm *dm,
 	struct bao_io_client *client, *found = NULL;
 	struct bao_io_range *range;
 
-	lockdep_assert_held(&dm->io_clients_lock);
-
 	// for all the I/O clients
 	list_for_each_entry(client, &dm->io_clients, list) {
-		read_lock_bh(&client->range_lock);
+		down_read(&client->range_lock);
 		// for all the ranges
 		list_for_each_entry(range, &client->range_list, list) {
 			// check if the I/O request is in the range of a given client
@@ -117,7 +115,7 @@ static struct bao_io_client *bao_find_io_client(struct bao_dm *dm,
 				break;
 			}
 		}
-		read_unlock_bh(&client->range_lock);
+		up_read(&client->range_lock);
 		if (found)
 			break;
 	}
@@ -153,10 +151,10 @@ int bao_dispatch_io(struct bao_dm *dm)
 	}
 
 	// find the I/O client that the I/O request belongs to
-	spin_lock_bh(&dm->io_clients_lock);
+	down_read(&dm->io_clients_lock);
 	client = bao_find_io_client(dm, &req);
 	if (!client) {
-		spin_unlock_bh(&dm->io_clients_lock);
+		up_read(&dm->io_clients_lock);
 		return rc;
 	}
 
@@ -165,7 +163,7 @@ int bao_dispatch_io(struct bao_dm *dm)
 
 	// wake up the handler thread which is waiting for requests on the wait queue
 	wake_up_interruptible(&client->wq);
-	spin_unlock_bh(&dm->io_clients_lock);
+	up_read(&dm->io_clients_lock);
 
 	// return the number of request that still need to be processed
 	return rc;

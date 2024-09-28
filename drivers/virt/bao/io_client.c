@@ -112,21 +112,21 @@ void bao_io_client_destroy(struct bao_io_client *client)
 	}
 
 	// remove the I/O ranges
-	write_lock_bh(&client->range_lock);
+	down_write(&client->range_lock);
 	list_for_each_entry_safe(range, next, &client->range_list, list) {
 		list_del(&range->list);
 		kfree(range);
 	}
-	write_unlock_bh(&client->range_lock);
+	up_write(&client->range_lock);
 
 	// remove the I/O client
-	spin_lock_bh(&dm->io_clients_lock);
+	down_write(&dm->io_clients_lock);
 	if (client->is_control)
 		dm->control_client = NULL;
 	else
 		dm->ioeventfd_client = NULL;
 	list_del(&client->list);
-	spin_unlock_bh(&dm->io_clients_lock);
+	up_write(&dm->io_clients_lock);
 
 	// resume the I/O requests dispatcher
 	bao_io_dispatcher_resume(dm);
@@ -232,7 +232,7 @@ struct bao_io_client *bao_io_client_create(struct bao_dm *dm,
 	if (name)
 		strncpy(client->name, name, sizeof(client->name) - 1);
 	INIT_LIST_HEAD(&client->virtio_requests);
-	rwlock_init(&client->range_lock);
+	init_rwsem(&client->range_lock);
 	INIT_LIST_HEAD(&client->range_list);
 	init_waitqueue_head(&client->wq);
 
@@ -247,13 +247,13 @@ struct bao_io_client *bao_io_client_create(struct bao_dm *dm,
 	}
 
 	// add the I/O client to the I/O clients list
-	spin_lock_bh(&dm->io_clients_lock);
+	down_write(&dm->io_clients_lock);
 	if (is_control)
 		dm->control_client = client;
 	else
 		dm->ioeventfd_client = client;
 	list_add(&client->list, &dm->io_clients);
-	spin_unlock_bh(&dm->io_clients_lock);
+	up_write(&dm->io_clients_lock);
 
 	// back up any pending requests that could potentially be lost
 	// (e.g., if the backend VM is initialized after the frontend VM)
@@ -299,9 +299,9 @@ int bao_io_client_range_add(struct bao_io_client *client, u64 start, u64 end)
 	range->end = end;
 
 	// add the range to the list
-	write_lock_bh(&client->range_lock);
+	down_write(&client->range_lock);
 	list_add(&range->list, &client->range_list);
-	write_unlock_bh(&client->range_lock);
+	up_write(&client->range_lock);
 
 	return 0;
 }
@@ -311,7 +311,7 @@ void bao_io_client_range_del(struct bao_io_client *client, u64 start, u64 end)
 	struct bao_io_range *range;
 
 	// delete the range from the list
-	write_lock_bh(&client->range_lock);
+	down_write(&client->range_lock);
 	list_for_each_entry(range, &client->range_list, list) {
 		if (start == range->start && end == range->end) {
 			list_del(&range->list);
@@ -319,5 +319,5 @@ void bao_io_client_range_del(struct bao_io_client *client, u64 start, u64 end)
 			break;
 		}
 	}
-	write_unlock_bh(&client->range_lock);
+	up_write(&client->range_lock);
 }

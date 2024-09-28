@@ -128,7 +128,7 @@ struct bao_dm* bao_dm_create(struct bao_dm_info *info)
 
 	// initialize the DM structure
 	INIT_LIST_HEAD(&dm->io_clients);
-	spin_lock_init(&dm->io_clients_lock);
+	init_rwsem(&dm->io_clients_lock);
 
 	// set the DM fields
 	dm->info = *info;

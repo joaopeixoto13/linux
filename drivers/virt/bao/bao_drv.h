@@ -47,7 +47,7 @@ typedef int (*bao_io_client_handler_t)(struct bao_io_client *client,
  * @virtio_requests: Array of all I/O requests that are free to process
  * @virtio_requests_lock: Lock to protect virtio_requests list
  * @range_list:	I/O ranges
- * @range_lock:	Lock to protect range_list
+ * @range_lock:	Semaphore to protect range_list
  * @handler: I/O requests handler of this client
  * @thread:	The thread which executes the handler
  * @wq:	The wait queue for the handler thread parking
@@ -62,7 +62,7 @@ struct bao_io_client {
 	struct list_head virtio_requests;
 	struct mutex virtio_requests_lock;
 	struct list_head range_list;
-	rwlock_t range_lock;
+	struct rw_semaphore range_lock;
 	bao_io_client_handler_t handler;
 	struct task_struct *thread;
 	wait_queue_head_t wq;
@@ -81,7 +81,7 @@ struct bao_io_client {
  * @irqfds: List to link all bao_irqfd
  * @irqfds_lock: Lock to protect irqfds list
  * @irqfd_server: Irqfd server
- * @io_clients_lock: Lock to protect io_clients
+ * @io_clients_lock: Semaphore to protect io_clients
  * @io_clients:	List to link all bao_io_client
  * @control_client:	Control client
  */
@@ -96,7 +96,7 @@ struct bao_dm {
 	struct list_head irqfds;
 	struct mutex irqfds_lock;
 	struct workqueue_struct *irqfd_server;
-	spinlock_t io_clients_lock;
+	struct rw_semaphore io_clients_lock;
 	struct list_head io_clients;
 	struct bao_io_client *control_client;
 };
