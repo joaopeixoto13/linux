@@ -77,54 +77,6 @@ int bao_io_dispatcher_remio_hypercall(struct bao_virtio_request *req)
 	return req->ret;
 }
 
-/**
- * Check if the I/O request is in the range
- * @range: The I/O request range
- * @req: The I/O request to be checked
- * @return True if the I/O request is in the range, False otherwise
-*/
-static bool bao_io_request_in_range(struct bao_io_range *range, struct bao_virtio_request *req)
-{
-	// check if the I/O request is in the range
-	if ((req->addr >= range->start) && ((req->addr + req->access_width - 1) <= range->end))
-		return true;
-
-	return false;
-}
-
-/**
- * Find the I/O client that the I/O request belongs to
- * @dm: The DM that the I/O request belongs to
- * @req: The I/O request
- * @return The I/O client that the I/O request belongs to, or NULL if there is no client
- */
-static struct bao_io_client *bao_find_io_client(struct bao_dm *dm,
-					    struct bao_virtio_request *req)
-{
-	struct bao_io_client *client, *found = NULL;
-	struct bao_io_range *range;
-
-	// for all the I/O clients
-	list_for_each_entry(client, &dm->io_clients, list) {
-		down_read(&client->range_lock);
-		// for all the ranges
-		list_for_each_entry(range, &client->range_list, list) {
-			// check if the I/O request is in the range of a given client
-			if (bao_io_request_in_range(range, req)) {
-				found = client;
-				break;
-			}
-		}
-		up_read(&client->range_lock);
-		if (found)
-			break;
-	}
-
-	// if the I/O request is not in the range of any client, return the Control client
-	// otherwise, return the client that the I/O request belongs to (e.g., Ioeventfd client)
-	return found ? found : dm->control_client;
-}
-
 int bao_dispatch_io(struct bao_dm *dm)
 {
 	struct bao_io_client *client;
@@ -152,7 +104,7 @@ int bao_dispatch_io(struct bao_dm *dm)
 
 	// find the I/O client that the I/O request belongs to
 	down_read(&dm->io_clients_lock);
-	client = bao_find_io_client(dm, &req);
+	client = bao_io_client_find(dm, &req);
 	if (!client) {
 		up_read(&dm->io_clients_lock);
 		return rc;

@@ -219,6 +219,14 @@ void bao_io_client_push_request(struct bao_io_client *client,
  */
 struct bao_virtio_request bao_io_client_pop_request(struct bao_io_client *client);
 
+/**
+ * Find the I/O client that the I/O request belongs to
+ * @dm: The DM that the I/O request belongs to
+ * @req: The I/O request
+ * @return The I/O client that the I/O request belongs to, or NULL if there is no client
+ */
+struct bao_io_client *bao_io_client_find(struct bao_dm *dm, struct bao_virtio_request *req);
+
 /************************************************************************************************************/
 /*                                        Ioeventfd Client API                                              */
 /************************************************************************************************************/
