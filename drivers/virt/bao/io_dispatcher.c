@@ -46,13 +46,6 @@ static struct workqueue_struct *bao_io_dispatcher_wq[BAO_IO_MAX_DMS];
 
 void bao_io_dispatcher_destroy(struct bao_dm *dm)
 {
-	struct bao_io_client *client, *next;
-
-	// destroy all the I/O clients
-	list_for_each_entry_safe(client, next, &dm->io_clients, list) {
-		bao_io_client_destroy(client);
-	}
-
 	// if the workqueue exists
 	if (bao_io_dispatcher_wq[dm->info.id]) {
 		// pause the I/O Dispatcher

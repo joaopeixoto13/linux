@@ -92,7 +92,11 @@ struct bao_virtio_request bao_io_client_pop_request(struct bao_io_client *client
 	return ret;
 }
 
-void bao_io_client_destroy(struct bao_io_client *client)
+/**
+ * Destroy an I/O client
+ * @client: The I/O client to be destroyed
+ */
+static void bao_io_client_destroy(struct bao_io_client *client)
 {
 	struct bao_io_client *range, *next;
 	struct bao_dm *dm = client->dm;
@@ -133,6 +137,16 @@ void bao_io_client_destroy(struct bao_io_client *client)
 
 	// free the allocated I/O client object
 	kfree(client);
+}
+
+void bao_io_clients_destroy(struct bao_dm *dm)
+{
+	struct bao_io_client *client, *next;
+
+	// destroy all the I/O clients
+	list_for_each_entry_safe(client, next, &dm->io_clients, list) {
+		bao_io_client_destroy(client);
+	}
 }
 
 int bao_io_client_attach(struct bao_io_client *client)

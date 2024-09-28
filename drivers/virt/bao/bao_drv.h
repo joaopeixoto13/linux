@@ -167,10 +167,10 @@ bao_io_client_create(struct bao_dm *dm, bao_io_client_handler_t handler,
 				void *data, bool is_control, const char *name);
 
 /**
- * Destroy an I/O client
- * @client: The I/O client to be destroyed
+ * Destroy the I/O clients of the DM
+ * @dm: The DM that the I/O clients belong to
  */
-void bao_io_client_destroy(struct bao_io_client *client);
+void bao_io_clients_destroy(struct bao_dm *dm);
 
 /**
  * Attach the thread to the I/O client to wait for I/O requests

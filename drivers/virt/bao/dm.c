@@ -187,6 +187,9 @@ void bao_dm_destroy(struct bao_dm *dm)
 	bao_irqfd_server_destroy(dm);
 
 	// destroy the I/O clients
+	bao_io_clients_destroy(dm);
+
+	// destroy the I/O dispatcher
 	bao_io_dispatcher_destroy(dm);
 
 	// clear the destroying flag
