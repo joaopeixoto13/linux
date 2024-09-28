@@ -42,7 +42,7 @@ void bao_intc_remove_handler(void)
 int bao_intc_register(struct bao_dm *dm)
 {
     char name[BAO_NAME_MAX_LEN];
-    snprintf(name, BAO_NAME_MAX_LEN, "bao-io-dispatcher-intc-%d", dm->info.id);
+    snprintf(name, BAO_NAME_MAX_LEN, "bao-iodintc%d", dm->info.id);
 	return request_irq(dm->info.irq, bao_interrupt_handler, 0, name, dm);
 }
 

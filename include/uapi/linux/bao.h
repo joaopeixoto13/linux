@@ -20,7 +20,7 @@
 #define BAO_IO_ASK 0x2
 #define BAO_IO_NOTIFY 0x3
 
-#define BAO_NAME_MAX_LEN 32
+#define BAO_NAME_MAX_LEN 16
 #define BAO_IO_REQUEST_MAX 64
 #define BAO_IO_MAX_DMS 16
 

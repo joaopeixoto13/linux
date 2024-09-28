@@ -279,7 +279,7 @@ int bao_irqfd_server_init(struct bao_dm *dm)
 	INIT_LIST_HEAD(&dm->irqfds);
 
 	// create a new name for the irqfd server based on type and DM ID
-	snprintf(name, sizeof(name), "bao-irqfd-%u", dm->info.id);
+	snprintf(name, sizeof(name), "bao-ioirqfds%u", dm->info.id);
 
 	// allocate a new workqueue for the irqfd
 	dm->irqfd_server = alloc_workqueue(name, 0, 0);

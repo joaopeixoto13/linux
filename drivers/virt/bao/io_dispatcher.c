@@ -172,7 +172,7 @@ int bao_io_dispatcher_pooling_handler(void *data)
 int bao_io_dispatcher_init(struct bao_dm *dm)
 {
 	char name[BAO_NAME_MAX_LEN];
-    snprintf(name, BAO_NAME_MAX_LEN, "bao-io-dispatcher-wq-%d", dm->info.id);
+    snprintf(name, BAO_NAME_MAX_LEN, "bao-iodwq%u", dm->info.id);
 
 	// Create the I/O Dispatcher workqueue with high priority
 	bao_io_dispatcher_wq[dm->info.id] = alloc_workqueue(name, WQ_HIGHPRI | WQ_MEM_RECLAIM, 1);

@@ -142,7 +142,7 @@ struct bao_dm* bao_dm_create(struct bao_dm_info *info)
 	write_unlock_bh(&bao_dm_list_lock);
 
 	// create the Control client
-	snprintf(name, sizeof(name), "bao-control-client-%u", dm->info.id);
+	snprintf(name, sizeof(name), "bao-ioctlc%u", dm->info.id);
 	dm->control_client = bao_io_client_create(dm, NULL, NULL, true, name);
 
 	// initialize the Ioeventfd client
@@ -224,7 +224,7 @@ static int bao_dm_create_anonymous_inode(struct bao_dm *dm)
 	}
 
 	// create a name for the DM file descriptor
-	snprintf(name, sizeof(name), "bao-dm-%u", dm->info.id);
+	snprintf(name, sizeof(name), "bao-dm%u", dm->info.id);
 
 	// create a new anonymous inode for the DM abstraction
 	// the `bao_dm_fops` defines the behavior of this "file" and
