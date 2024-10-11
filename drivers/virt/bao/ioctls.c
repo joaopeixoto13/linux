@@ -87,7 +87,7 @@ long bao_dm_ioctl(struct file *filp, unsigned int cmd,
 		}
 		kfree(req);
 		break;
-	case BAO_IOCTL_IO_REQUEST_NOTIFY_COMPLETED:
+	case BAO_IOCTL_IO_REQUEST_COMPLETE:
 		req = memdup_user((void __user *)ioctl_param,
 				  sizeof(struct bao_virtio_request));
 		if (IS_ERR(req)) {

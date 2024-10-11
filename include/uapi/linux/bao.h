@@ -100,7 +100,7 @@ struct bao_dm_info {
 #define BAO_IOCTL_DM_GET_INFO _IOWR(BAO_IOCTL_TYPE, 0x01, struct bao_dm_info)
 #define BAO_IOCTL_IO_CLIENT_ATTACH \
 	_IOWR(BAO_IOCTL_TYPE, 0x02, struct bao_virtio_request)
-#define BAO_IOCTL_IO_REQUEST_NOTIFY_COMPLETED \
+#define BAO_IOCTL_IO_REQUEST_COMPLETE \
 	_IOW(BAO_IOCTL_TYPE, 0x03, struct bao_virtio_request)
 #define BAO_IOCTL_IOEVENTFD _IOW(BAO_IOCTL_TYPE, 0x04, struct bao_ioeventfd)
 #define BAO_IOCTL_IRQFD _IOW(BAO_IOCTL_TYPE, 0x05, struct bao_irqfd)
