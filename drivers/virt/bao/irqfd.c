@@ -63,7 +63,7 @@ static void bao_irqfd_shutdown(struct irqfd *irqfd)
 static int bao_irqfd_inject(int id)
 {
 	// notify the Hypervisor about the event
-	struct bao_virtio_request ret = bao_hypercall_remio(id, 0, BAO_IO_NOTIFY, 0, 0, 0);
+	struct bao_virtio_request ret = bao_hypercall_remio(id, 0, BAO_IO_NOTIFY, 0, 0);
 
 	if (ret.ret != 0) {
 		return -EFAULT;

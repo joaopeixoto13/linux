@@ -31,8 +31,7 @@
  * @op: Write, Read, Ask or Notify operation
  * @value: Value to write or read
  * @access_width: Access width (VirtIO MMIO only allows 4-byte wide and alligned accesses)
- * @cpu_id: Frontend CPU ID of the I/O request
- * @vcpu_id: Frontend vCPU ID of the I/O request
+ * @request_id: Request ID
  * @ret: Return value
 */
 struct bao_virtio_request {
@@ -41,8 +40,7 @@ struct bao_virtio_request {
 	__u64 op;
 	__u64 value;
 	__u64 access_width;
-	__u64 cpu_id;
-	__u64 vcpu_id;
+	__u64 request_id;
 	__s32 ret;
 };
 

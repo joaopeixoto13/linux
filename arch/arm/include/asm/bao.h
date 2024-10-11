@@ -22,14 +22,13 @@
  * @addr: Access address
  * @op:	Write, Read, Ask or Notify operation
  * @value: Value to write or read
- * @cpu_id: CPU ID
- * @vcpu_id: VCPU ID
+ * @request_id: Request ID
  *
  * @return: The VirtIO request structure
  */
 static inline struct bao_virtio_request
 asm_bao_hypercall_remio(u64 remio_hc_id, u64 dm_id, u64 addr, u64 op,
-			 u64 value, u64 cpu_id, u64 vcpu_id)
+			 u64 value, u64 request_id)
 {
 	register int x0 asm("r0") =
 		ARM_SMCCC_CALL_VAL(ARM_SMCCC_FAST_CALL, ARM_SMCCC_SMC_64,
@@ -38,16 +37,13 @@ asm_bao_hypercall_remio(u64 remio_hc_id, u64 dm_id, u64 addr, u64 op,
 	register u32 x2 asm("r2") = addr;
 	register u32 x3 asm("r3") = op;
 	register u32 x4 asm("r4") = value;
-	register u32 x5 asm("r5") = cpu_id;
-	register u32 x6 asm("r6") = vcpu_id;
+	register u32 x5 asm("r5") = request_id;
 
 	struct bao_virtio_request ret;
 
 	asm volatile("hvc 0\n\t"
-		     : "=r"(x0), "=r"(x1), "=r"(x2), "=r"(x3), "=r"(x4),
-		       "=r"(x5), "=r"(x6)
-		     : "r"(x0), "r"(x1), "r"(x2), "r"(x3), "r"(x4), "r"(x5),
-		       "r"(x6)
+		     : "=r"(x0), "=r"(x1), "=r"(x2), "=r"(x3), "=r"(x4), "=r"(x5)
+		     : "r"(x0), "r"(x1), "r"(x2), "r"(x3), "r"(x4), "r"(x5)
 		     : "memory");
 
 	ret.ret = x0;
@@ -56,8 +52,7 @@ asm_bao_hypercall_remio(u64 remio_hc_id, u64 dm_id, u64 addr, u64 op,
 	ret.op = x2;
 	ret.value = x3;
 	ret.access_width = x4;
-	ret.cpu_id = x5;
-	ret.vcpu_id = x6;
+	ret.request_id = x5;
 
 	return ret;
 }

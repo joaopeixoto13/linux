@@ -65,7 +65,7 @@ void bao_io_dispatcher_destroy(struct bao_dm *dm)
 int bao_io_dispatcher_remio_hypercall(struct bao_virtio_request *req)
 {
 	// notify the Hypervisor that the request was completed
-	*req = bao_hypercall_remio(req->dm_id, req->addr, req->op, req->value, req->cpu_id, req->vcpu_id);
+	*req = bao_hypercall_remio(req->dm_id, req->addr, req->op, req->value, req->request_id);
 
 	return req->ret;
 }
@@ -84,8 +84,7 @@ int bao_dispatch_io(struct bao_dm *dm)
 	// clear the other fields (convention)
 	req.addr = 0;
 	req.value = 0;
-	req.cpu_id = 0;
-	req.vcpu_id = 0;
+	req.request_id = 0;
 
 	// perform a Hypercall to get the I/O request from the Remote I/O system
 	// the rc value holds the number of requests that still need to be processed

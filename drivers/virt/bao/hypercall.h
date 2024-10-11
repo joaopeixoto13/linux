@@ -23,17 +23,14 @@
  * @addr: Access address
  * @op:		Write, Read, Ask or Notify operation
  * @value:	Value to write or read
- * @cpu_id:	Frontend CPU ID of the I/O request
- * @vcpu_id:	Frontend vCPU ID of the I/O request
+ * @request_id: Request ID
  *
  * @return: The VirtIO request structure
  */
 static inline struct bao_virtio_request
-bao_hypercall_remio(u64 dm_id, u64 addr, u64 op, u64 value, u64 cpu_id,
-		     u64 vcpu_id)
+bao_hypercall_remio(u64 dm_id, u64 addr, u64 op, u64 value, u64 request_id)
 {
-	return asm_bao_hypercall_remio(REMIO_HC_ID, dm_id, addr, op,
-					value, cpu_id, vcpu_id);
+	return asm_bao_hypercall_remio(REMIO_HC_ID, dm_id, addr, op, value, request_id);
 }
 
 #endif /* __BAO_HYPERCALL_H */
