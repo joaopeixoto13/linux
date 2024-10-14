@@ -200,6 +200,7 @@ void bao_io_client_range_del(struct bao_io_client *client, u64 start,
  * Retrieve the oldest I/O request from the I/O client
  * @client: The I/O client
  * @req: The virtio request to be retrieved
+ * @return 0 on success, <0 on failure
  */
 int bao_io_client_request(struct bao_io_client *client,
 			      struct bao_virtio_request *req);
@@ -215,9 +216,11 @@ void bao_io_client_push_request(struct bao_io_client *client,
 /**
  * Pop an I/O request from the I/O client request list
  * @client: The I/O client that the I/O request belongs to
- * @return The I/O request
+ * @req: The I/O request to be popped
+ * @return true if the I/O request was popped, false otherwise
  */
-struct bao_virtio_request bao_io_client_pop_request(struct bao_io_client *client);
+bool bao_io_client_pop_request(struct bao_io_client *client, 
+						struct bao_virtio_request *req);
 
 /**
  * Find the I/O client that the I/O request belongs to

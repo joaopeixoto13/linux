@@ -61,13 +61,9 @@ void bao_io_client_push_request(struct bao_io_client *client,
 	mutex_unlock(&client->virtio_requests_lock);
 }
 
-struct bao_virtio_request bao_io_client_pop_request(struct bao_io_client *client)
+bool bao_io_client_pop_request(struct bao_io_client *client, struct bao_virtio_request *ret)
 {
 	struct bao_io_request *req;
-    struct bao_virtio_request ret;
-
-    // initialize the return value with an error
-    ret.ret = -EINVAL;
 
 	// pop the first request from the list
 	mutex_lock(&client->virtio_requests_lock);
@@ -76,11 +72,11 @@ struct bao_virtio_request bao_io_client_pop_request(struct bao_io_client *client
 	mutex_unlock(&client->virtio_requests_lock);
 
 	if (req == NULL) {
-		return ret;
+		return false;
 	}
 
 	// copy the request to the return value
-	ret = req->virtio_request;
+	*ret = req->virtio_request;
 
 	// delete the request from the list
 	mutex_lock(&client->virtio_requests_lock);
@@ -90,7 +86,7 @@ struct bao_virtio_request bao_io_client_pop_request(struct bao_io_client *client
 	// free the request
 	kfree(req);
 
-	return ret;
+	return true;
 }
 
 /**
@@ -204,8 +200,7 @@ static int bao_io_client_kernel_thread(void *data)
 		stop = bao_io_client_attach(client);
 		while (bao_io_client_has_pending_requests(client) && !stop) {
 			// get the first kernel handled I/O request
-            req = bao_io_client_pop_request(client);
-			if (req.ret < 0) {
+			if (!bao_io_client_pop_request(client, &req)) {
 				return -EFAULT;
 			}
 			// call the handler callback of the I/O client
@@ -294,10 +289,11 @@ int bao_io_client_request(struct bao_io_client *client,
 	}
 
     // pop the first request from the list
-    *req = bao_io_client_pop_request(client);
-
-    // return the request return value
-	return req->ret;
+	if (!bao_io_client_pop_request(client, req)) {
+		return -EFAULT;
+	}
+	
+	return 0;
 }
 
 int bao_io_client_range_add(struct bao_io_client *client, u64 start, u64 end)

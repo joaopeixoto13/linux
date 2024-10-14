@@ -32,7 +32,6 @@
  * @value: Value to write or read
  * @access_width: Access width (VirtIO MMIO only allows 4-byte wide and alligned accesses)
  * @request_id: Request ID
- * @ret: Return value
 */
 struct bao_virtio_request {
 	__u64 dm_id;
@@ -41,7 +40,6 @@ struct bao_virtio_request {
 	__u64 value;
 	__u64 access_width;
 	__u64 request_id;
-	__s32 ret;
 };
 
 /**
