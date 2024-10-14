@@ -103,4 +103,19 @@ struct bao_dm_info {
 #define BAO_IOCTL_IOEVENTFD _IOW(BAO_IOCTL_TYPE, 0x04, struct bao_ioeventfd)
 #define BAO_IOCTL_IRQFD _IOW(BAO_IOCTL_TYPE, 0x05, struct bao_irqfd)
 
+/* Remote I/O Hypercall ID */
+#define REMIO_HC_ID 0x2
+
+/**
+ * Remote I/O Hypercall return structure
+ * @hyp_ret: The generic return value of Bao's hypercall
+ * @remio_hyp_ret: The return value of the Remote I/O Hypercall
+ * @pending_requests: The number of pending requests (only used in the Remote I/O Ask Hypercall)
+*/
+struct remio_hypercall_ret {
+	u64 hyp_ret;
+	u64 remio_hyp_ret;
+	u64 pending_requests;
+};
+
 #endif /* _UAPI_BAO_H */

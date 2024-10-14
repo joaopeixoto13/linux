@@ -20,6 +20,7 @@
 
 #include <linux/bao.h>
 #include "bao_drv.h"
+#include "hypercall.h"
 
 long bao_io_dispatcher_driver_ioctl(struct file *filp, unsigned int cmd, unsigned long ioctl_param)
 {
@@ -58,6 +59,7 @@ long bao_dm_ioctl(struct file *filp, unsigned int cmd,
 		  unsigned long ioctl_param)
 {
 	struct bao_virtio_request *req;
+	struct remio_hypercall_ret hret;
 	int rc = -EINVAL;
 
 	// get the backend DM pointer from the file pointer private data
@@ -94,7 +96,8 @@ long bao_dm_ioctl(struct file *filp, unsigned int cmd,
 			pr_err("%s: memdup_user failed\n", __FUNCTION__);
 			return PTR_ERR(req);
 		}
-		rc = bao_io_dispatcher_remio_hypercall(req);
+		hret = bao_hypercall_remio(req);
+		rc = hret.hyp_ret | hret.remio_hyp_ret;
 		break;
 	case BAO_IOCTL_IOEVENTFD:
 		struct bao_ioeventfd ioeventfd;

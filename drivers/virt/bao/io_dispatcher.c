@@ -62,19 +62,11 @@ void bao_io_dispatcher_destroy(struct bao_dm *dm)
 	}
 }
 
-int bao_io_dispatcher_remio_hypercall(struct bao_virtio_request *req)
-{
-	// notify the Hypervisor that the request was completed
-	*req = bao_hypercall_remio(req->dm_id, req->addr, req->op, req->value, req->request_id);
-
-	return req->ret;
-}
-
 int bao_dispatch_io(struct bao_dm *dm)
 {
 	struct bao_io_client *client;
 	struct bao_virtio_request req;
-	int rc = 0;
+	struct remio_hypercall_ret ret;
 
 	// update the request
 	// the dm_id is the Virtual Remote I/O ID
@@ -87,11 +79,11 @@ int bao_dispatch_io(struct bao_dm *dm)
 	req.request_id = 0;
 
 	// perform a Hypercall to get the I/O request from the Remote I/O system
-	// the rc value holds the number of requests that still need to be processed
-	rc = bao_io_dispatcher_remio_hypercall(&req);
+	// the ret.pending_requests value holds the number of requests that still need to be processed
+	ret = bao_hypercall_remio(&req);
 
-	if (rc < 0) {
-		return rc;
+	if (ret.hyp_ret != 0 || ret.remio_hyp_ret != 0) {
+		return -EFAULT;
 	}
 
 	// find the I/O client that the I/O request belongs to
@@ -99,7 +91,7 @@ int bao_dispatch_io(struct bao_dm *dm)
 	client = bao_io_client_find(dm, &req);
 	if (!client) {
 		up_read(&dm->io_clients_lock);
-		return rc;
+		return -EEXIST;
 	}
 
 	// add the request to the end of the virtio_request list
@@ -110,7 +102,7 @@ int bao_dispatch_io(struct bao_dm *dm)
 	up_read(&dm->io_clients_lock);
 
 	// return the number of request that still need to be processed
-	return rc;
+	return ret.pending_requests;
 }
 
 static void io_dispatcher(struct work_struct *work)

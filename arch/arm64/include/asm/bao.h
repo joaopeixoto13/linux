@@ -17,42 +17,36 @@
 
 /**
  * asm_bao_hypercall_remio() - Performs a Remote I/O Hypercall
- * @remio_hc_id: VirtIO Hypercall ID
- * @dm_id: Device Model ID
- * @addr: Access address
- * @op:	Write, Read, Ask or Notify operation
- * @value: Value to write or read
- * @request_id: Request ID
- *
- * @return: The VirtIO request structure
+ * @request: VirtIO request structure
+ * @return: Remote I/O Hypercall return structure
  */
-static inline struct bao_virtio_request
-asm_bao_hypercall_remio(u64 remio_hc_id, u64 dm_id, u64 addr, u64 op,
-			 u64 value, u64 request_id)
+static inline struct remio_hypercall_ret asm_bao_hypercall_remio(struct bao_virtio_request *request)
 {
+	struct remio_hypercall_ret ret;
 	register int x0 asm("x0") =
 		ARM_SMCCC_CALL_VAL(ARM_SMCCC_FAST_CALL, ARM_SMCCC_SMC_64,
-				   ARM_SMCCC_OWNER_VENDOR_HYP, remio_hc_id);
-	register u64 x1 asm("x1") = dm_id;
-	register u64 x2 asm("x2") = addr;
-	register u64 x3 asm("x3") = op;
-	register u64 x4 asm("x4") = value;
-	register u64 x5 asm("x5") = request_id;
-
-	struct bao_virtio_request ret;
+				   ARM_SMCCC_OWNER_VENDOR_HYP, REMIO_HC_ID);
+	register u64 x1 asm("x1") = request->dm_id;
+	register u64 x2 asm("x2") = request->addr;
+	register u64 x3 asm("x3") = request->op;
+	register u64 x4 asm("x4") = request->value;
+	register u64 x5 asm("x5") = request->request_id;
+	register u64 x6 asm("x6") = 0;
 
 	asm volatile("hvc 0\n\t"
-		     : "=r"(x0), "=r"(x1), "=r"(x2), "=r"(x3), "=r"(x4), "=r"(x5)
+		     : "=r"(x0), "=r"(x1), "=r"(x2), "=r"(x3), "=r"(x4), "=r"(x5), "=r"(x6)
 		     : "r"(x0), "r"(x1), "r"(x2), "r"(x3), "r"(x4), "r"(x5)
 		     : "memory");
 
-	ret.ret = x0;
-	ret.dm_id = dm_id;
-	ret.addr = x1;
-	ret.op = x2;
-	ret.value = x3;
-	ret.access_width = x4;
-	ret.request_id = x5;
+	ret.hyp_ret = 0;
+	ret.remio_hyp_ret = x0;
+	ret.pending_requests = x6;
+
+	request->addr = x1;
+	request->op = x2;
+	request->value = x3;
+	request->access_width = x4;
+	request->request_id = x5;
 
 	return ret;
 }

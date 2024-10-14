@@ -319,13 +319,6 @@ void bao_io_dispatcher_pause(struct bao_dm *dm);
  */
 void bao_io_dispatcher_resume(struct bao_dm *dm);
 
-/**
- * Issue a Remote I/O Hypercall
- * @req: The I/O request information (hypercall input and output data)
- * @return >=0 on success, <0 on failure
- */
-int bao_io_dispatcher_remio_hypercall(struct bao_virtio_request *req);
-
 /************************************************************************************************************/
 /*                                      Interrupt Controller API                                            */
 /************************************************************************************************************/

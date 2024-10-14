@@ -9,6 +9,7 @@
  */
 
 #include "bao_drv.h"
+#include "hypercall.h"
 #include <linux/slab.h>
 #include <linux/kthread.h>
 #include <linux/io.h>
@@ -194,6 +195,7 @@ static int bao_io_client_kernel_thread(void *data)
 {
 	struct bao_io_client *client = data;
 	struct bao_virtio_request req;
+	struct remio_hypercall_ret hret;
 	int ret = -EINVAL;
 	int stop = false;
 
@@ -214,7 +216,11 @@ static int bao_io_client_kernel_thread(void *data)
 			}
 			// complete the request
 			else {
-				bao_io_dispatcher_remio_hypercall(&req);
+				hret = bao_hypercall_remio(&req);
+
+				if (hret.hyp_ret != 0 || hret.remio_hyp_ret != 0) {
+					return -EFAULT;
+				}
 			}
 		}
 	}
